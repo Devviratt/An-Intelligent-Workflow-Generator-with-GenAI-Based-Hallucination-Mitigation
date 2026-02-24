@@ -1,0 +1,174 @@
+{
+  "domain": "user_registration",
+  "display_name": "User Registration & Onboarding",
+  "description": "User sign-up flow including input validation, verification, profile creation, and welcome onboarding.",
+  "version": "1.0.0",
+  "keywords": [
+    "register", "registration", "signup", "sign up", "create account",
+    "onboarding", "user", "account", "profile", "verify", "email",
+    "password", "otp", "sso", "oauth", "login", "enroll"
+  ],
+  "start_node": "start_registration",
+  "end_node": "registration_complete",
+  "error_terminal": "registration_failed",
+  "metadata": {
+    "avg_steps": 7,
+    "sla_seconds": 60,
+    "compliance": ["GDPR", "CCPA"],
+    "criticality": "medium"
+  },
+  "steps": [
+    {
+      "id": "start_registration",
+      "label": "User Opens Registration",
+      "type": "start",
+      "description": "User navigates to registration page.",
+      "required": true
+    },
+    {
+      "id": "collect_info",
+      "label": "Collect User Information",
+      "type": "process",
+      "description": "Gather name, email, password, and optional fields.",
+      "required": true
+    },
+    {
+      "id": "validate_input",
+      "label": "Validate Input Fields",
+      "type": "process",
+      "description": "Check email format, password strength, required fields.",
+      "required": true
+    },
+    {
+      "id": "check_duplicate",
+      "label": "Check Duplicate Account",
+      "type": "decision",
+      "description": "Verify email/username is not already registered.",
+      "branches": {
+        "unique": "No existing account found.",
+        "duplicate": "Account already exists."
+      },
+      "required": true
+    },
+    {
+      "id": "send_verification",
+      "label": "Send Verification Email/OTP",
+      "type": "process",
+      "description": "Send verification code via email or SMS.",
+      "required": true
+    },
+    {
+      "id": "verify_identity",
+      "label": "Verify User Identity",
+      "type": "decision",
+      "description": "User submits verification code for validation.",
+      "branches": {
+        "verified": "Code matches — identity confirmed.",
+        "failed": "Invalid or expired code."
+      },
+      "required": true
+    },
+    {
+      "id": "create_profile",
+      "label": "Create User Profile",
+      "type": "process",
+      "description": "Persist user data and create account in database.",
+      "required": true
+    },
+    {
+      "id": "assign_role",
+      "label": "Assign Default Role",
+      "type": "process",
+      "description": "Assign default role and permissions to new user.",
+      "required": false
+    },
+    {
+      "id": "setup_preferences",
+      "label": "Setup User Preferences",
+      "type": "process",
+      "description": "Configure notification and display preferences.",
+      "required": false
+    },
+    {
+      "id": "send_welcome",
+      "label": "Send Welcome Communication",
+      "type": "process",
+      "description": "Send welcome email with getting-started guide.",
+      "required": false
+    },
+    {
+      "id": "registration_complete",
+      "label": "Registration Complete",
+      "type": "end",
+      "description": "User account created and ready to use.",
+      "required": true
+    },
+    {
+      "id": "registration_failed",
+      "label": "Registration Failed",
+      "type": "end",
+      "description": "Registration could not be completed.",
+      "required": false
+    },
+    {
+      "id": "retry_verification",
+      "label": "Retry Verification",
+      "type": "process",
+      "description": "Resend verification code for another attempt.",
+      "required": false,
+      "retry_config": {
+        "max_attempts": 3,
+        "backoff_seconds": [30, 60, 120],
+        "retry_on": ["expired_code", "not_received"]
+      }
+    }
+  ],
+  "transitions": [
+    {"from": "start_registration", "to": "collect_info", "condition": null},
+    {"from": "collect_info", "to": "validate_input", "condition": null},
+    {"from": "validate_input", "to": "check_duplicate", "condition": "valid"},
+    {"from": "validate_input", "to": "registration_failed", "condition": "invalid"},
+    {"from": "check_duplicate", "to": "send_verification", "condition": "unique"},
+    {"from": "check_duplicate", "to": "registration_failed", "condition": "duplicate"},
+    {"from": "send_verification", "to": "verify_identity", "condition": null},
+    {"from": "verify_identity", "to": "create_profile", "condition": "verified"},
+    {"from": "verify_identity", "to": "retry_verification", "condition": "failed"},
+    {"from": "retry_verification", "to": "verify_identity", "condition": "retry_allowed"},
+    {"from": "retry_verification", "to": "registration_failed", "condition": "max_retries_exceeded"},
+    {"from": "create_profile", "to": "assign_role", "condition": null},
+    {"from": "assign_role", "to": "setup_preferences", "condition": null},
+    {"from": "setup_preferences", "to": "send_welcome", "condition": null},
+    {"from": "send_welcome", "to": "registration_complete", "condition": null}
+  ],
+  "validation_rules": {
+    "max_depth": 12,
+    "max_retries": 3,
+    "required_steps": ["start_registration", "collect_info", "validate_input", "check_duplicate", "verify_identity", "create_profile", "registration_complete"],
+    "forbidden_direct_transitions": [
+      {"from": "start_registration", "to": "create_profile"},
+      {"from": "start_registration", "to": "registration_complete"}
+    ]
+  },
+  "end_nodes": ["registration_complete", "registration_failed"],
+  "decision_rules": {
+    "check_duplicate": {
+      "branches": [
+        {"label": "unique", "target": "send_verification"},
+        {"label": "duplicate", "target": "registration_failed"}
+      ]
+    },
+    "verify_identity": {
+      "branches": [
+        {"label": "verified", "target": "create_profile"},
+        {"label": "failed", "target": "retry_verification"}
+      ]
+    }
+  },
+  "flowchart_retry_constraints": [
+    {
+      "node": "retry_verification",
+      "max_attempts": 3,
+      "loop_back_to": "verify_identity"
+    }
+  ]
+}

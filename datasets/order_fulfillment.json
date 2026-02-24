@@ -1,0 +1,232 @@
+{
+  "domain": "order_fulfillment",
+  "display_name": "Order Fulfillment & Shipping",
+  "description": "End-to-end order processing from placement through inventory check, packaging, shipping, and delivery confirmation.",
+  "version": "1.0.0",
+  "keywords": [
+    "order", "fulfillment", "shipping", "delivery", "dispatch",
+    "warehouse", "inventory", "package", "tracking", "logistics",
+    "courier", "stock", "pick", "pack", "ship", "return", "ecommerce",
+    "cart", "checkout", "supply chain"
+  ],
+  "start_node": "order_placed",
+  "end_node": "order_delivered",
+  "error_terminal": "order_cancelled",
+  "metadata": {
+    "avg_steps": 10,
+    "sla_seconds": 86400,
+    "compliance": ["SOX"],
+    "criticality": "high"
+  },
+  "steps": [
+    {
+      "id": "order_placed",
+      "label": "Order Placed",
+      "type": "start",
+      "description": "Customer places an order in the system.",
+      "required": true
+    },
+    {
+      "id": "validate_order",
+      "label": "Validate Order Details",
+      "type": "process",
+      "description": "Verify order items, quantities, pricing, and shipping address.",
+      "required": true
+    },
+    {
+      "id": "check_inventory",
+      "label": "Check Inventory Availability",
+      "type": "decision",
+      "description": "Verify all items are in stock at the fulfillment center.",
+      "branches": {
+        "in_stock": "All items available.",
+        "partial_stock": "Some items unavailable.",
+        "out_of_stock": "No items available."
+      },
+      "required": true
+    },
+    {
+      "id": "reserve_inventory",
+      "label": "Reserve Inventory",
+      "type": "process",
+      "description": "Lock inventory items for this order.",
+      "required": true
+    },
+    {
+      "id": "process_payment",
+      "label": "Process Payment",
+      "type": "decision",
+      "description": "Charge customer payment method.",
+      "branches": {
+        "payment_success": "Payment captured successfully.",
+        "payment_failed": "Payment could not be processed."
+      },
+      "required": true
+    },
+    {
+      "id": "pick_items",
+      "label": "Pick Items from Warehouse",
+      "type": "process",
+      "description": "Warehouse staff picks ordered items.",
+      "required": true
+    },
+    {
+      "id": "quality_check",
+      "label": "Quality Inspection",
+      "type": "decision",
+      "description": "Inspect picked items for damage or defects.",
+      "branches": {
+        "passed": "Items pass quality check.",
+        "failed": "Items fail — need replacement."
+      },
+      "required": false
+    },
+    {
+      "id": "pack_items",
+      "label": "Pack Items",
+      "type": "process",
+      "description": "Package items securely for shipping.",
+      "required": true
+    },
+    {
+      "id": "generate_label",
+      "label": "Generate Shipping Label",
+      "type": "process",
+      "description": "Create shipping label with tracking number.",
+      "required": true
+    },
+    {
+      "id": "dispatch_shipment",
+      "label": "Dispatch Shipment",
+      "type": "process",
+      "description": "Hand off package to shipping carrier.",
+      "required": true
+    },
+    {
+      "id": "track_shipment",
+      "label": "Track Shipment",
+      "type": "process",
+      "description": "Monitor package through carrier tracking system.",
+      "required": false
+    },
+    {
+      "id": "delivery_attempt",
+      "label": "Delivery Attempt",
+      "type": "decision",
+      "description": "Carrier attempts delivery to customer.",
+      "branches": {
+        "delivered": "Package delivered successfully.",
+        "failed_attempt": "Delivery attempt failed."
+      },
+      "required": true
+    },
+    {
+      "id": "send_confirmation",
+      "label": "Send Delivery Confirmation",
+      "type": "process",
+      "description": "Notify customer of successful delivery.",
+      "required": true
+    },
+    {
+      "id": "order_delivered",
+      "label": "Order Delivered",
+      "type": "end",
+      "description": "Order successfully delivered to customer.",
+      "required": true
+    },
+    {
+      "id": "order_cancelled",
+      "label": "Order Cancelled",
+      "type": "end",
+      "description": "Order has been cancelled.",
+      "required": false
+    },
+    {
+      "id": "notify_backorder",
+      "label": "Notify Backorder",
+      "type": "process",
+      "description": "Inform customer of backordered items.",
+      "required": false
+    },
+    {
+      "id": "retry_delivery",
+      "label": "Retry Delivery",
+      "type": "process",
+      "description": "Schedule re-delivery attempt.",
+      "required": false,
+      "retry_config": {
+        "max_attempts": 3,
+        "backoff_seconds": [86400, 86400, 86400],
+        "retry_on": ["not_home", "address_issue"]
+      }
+    }
+  ],
+  "transitions": [
+    {"from": "order_placed", "to": "validate_order", "condition": null},
+    {"from": "validate_order", "to": "check_inventory", "condition": "order_valid"},
+    {"from": "validate_order", "to": "order_cancelled", "condition": "order_invalid"},
+    {"from": "check_inventory", "to": "reserve_inventory", "condition": "in_stock"},
+    {"from": "check_inventory", "to": "notify_backorder", "condition": "partial_stock"},
+    {"from": "check_inventory", "to": "order_cancelled", "condition": "out_of_stock"},
+    {"from": "notify_backorder", "to": "reserve_inventory", "condition": null},
+    {"from": "reserve_inventory", "to": "process_payment", "condition": null},
+    {"from": "process_payment", "to": "pick_items", "condition": "payment_success"},
+    {"from": "process_payment", "to": "order_cancelled", "condition": "payment_failed"},
+    {"from": "pick_items", "to": "quality_check", "condition": null},
+    {"from": "quality_check", "to": "pack_items", "condition": "passed"},
+    {"from": "quality_check", "to": "pick_items", "condition": "failed"},
+    {"from": "pack_items", "to": "generate_label", "condition": null},
+    {"from": "generate_label", "to": "dispatch_shipment", "condition": null},
+    {"from": "dispatch_shipment", "to": "track_shipment", "condition": null},
+    {"from": "track_shipment", "to": "delivery_attempt", "condition": null},
+    {"from": "delivery_attempt", "to": "send_confirmation", "condition": "delivered"},
+    {"from": "delivery_attempt", "to": "retry_delivery", "condition": "failed_attempt"},
+    {"from": "retry_delivery", "to": "delivery_attempt", "condition": "retry_allowed"},
+    {"from": "retry_delivery", "to": "order_cancelled", "condition": "max_retries_exceeded"},
+    {"from": "send_confirmation", "to": "order_delivered", "condition": null}
+  ],
+  "validation_rules": {
+    "max_depth": 20,
+    "max_retries": 3,
+    "required_steps": ["order_placed", "validate_order", "check_inventory", "reserve_inventory", "process_payment", "pick_items", "pack_items", "dispatch_shipment", "delivery_attempt", "order_delivered"],
+    "forbidden_direct_transitions": [
+      {"from": "order_placed", "to": "dispatch_shipment"},
+      {"from": "order_placed", "to": "order_delivered"}
+    ]
+  },
+  "end_nodes": ["order_delivered", "order_cancelled"],
+  "decision_rules": {
+    "check_inventory": {
+      "branches": [
+        {"label": "in_stock", "target": "reserve_inventory"},
+        {"label": "partial_stock", "target": "notify_backorder"},
+        {"label": "out_of_stock", "target": "order_cancelled"}
+      ]
+    },
+    "process_payment": {
+      "branches": [
+        {"label": "payment_success", "target": "pick_items"},
+        {"label": "payment_failed", "target": "order_cancelled"}
+      ]
+    },
+    "quality_check": {
+      "branches": [
+        {"label": "passed", "target": "pack_items"},
+        {"label": "failed", "target": "pick_items"}
+      ]
+    },
+    "delivery_attempt": {
+      "branches": [
+        {"label": "delivered", "target": "send_confirmation"},
+        {"label": "failed_attempt", "target": "retry_delivery"}
+      ]
+    }
+  },
+  "flowchart_retry_constraints": [
+    {
+      "node": "retry_delivery",
+      "max_attempts": 3,
+      "loop_back_to": "delivery_attempt"
+    }
+  ]
+}

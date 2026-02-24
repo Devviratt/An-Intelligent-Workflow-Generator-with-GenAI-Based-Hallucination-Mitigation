@@ -1,0 +1,216 @@
+{
+  "domain": "incident_response",
+  "display_name": "IT Incident Response",
+  "description": "Incident detection, triage, investigation, resolution, and post-mortem workflow for IT operations.",
+  "version": "1.0.0",
+  "keywords": [
+    "incident", "alert", "outage", "downtime", "error", "bug",
+    "escalation", "triage", "resolution", "postmortem", "root cause",
+    "sre", "devops", "monitoring", "pager", "on-call", "sla",
+    "severity", "p1", "p2", "critical", "failure", "recovery"
+  ],
+  "start_node": "incident_detected",
+  "end_node": "incident_resolved",
+  "error_terminal": "incident_escalated_external",
+  "metadata": {
+    "avg_steps": 9,
+    "sla_seconds": 3600,
+    "compliance": ["ITIL", "ISO27001"],
+    "criticality": "critical"
+  },
+  "steps": [
+    {
+      "id": "incident_detected",
+      "label": "Incident Detected",
+      "type": "start",
+      "description": "Monitoring system or user reports an incident.",
+      "required": true
+    },
+    {
+      "id": "create_ticket",
+      "label": "Create Incident Ticket",
+      "type": "process",
+      "description": "Log incident with initial details in ticketing system.",
+      "required": true
+    },
+    {
+      "id": "assess_severity",
+      "label": "Assess Severity",
+      "type": "decision",
+      "description": "Determine incident severity level (P1-P4).",
+      "branches": {
+        "critical": "P1 — immediate response required.",
+        "high": "P2 — urgent, needs prompt attention.",
+        "medium": "P3 — normal priority.",
+        "low": "P4 — minor, can be scheduled."
+      },
+      "required": true
+    },
+    {
+      "id": "assign_responder",
+      "label": "Assign Responder",
+      "type": "process",
+      "description": "Assign on-call engineer or response team.",
+      "required": true
+    },
+    {
+      "id": "investigate",
+      "label": "Investigate Root Cause",
+      "type": "process",
+      "description": "Analyze logs, metrics, and traces to identify cause.",
+      "required": true
+    },
+    {
+      "id": "identify_fix",
+      "label": "Identify Fix",
+      "type": "decision",
+      "description": "Determine if a fix is available and applicable.",
+      "branches": {
+        "fix_available": "Known fix or workaround exists.",
+        "needs_escalation": "Requires specialist or vendor involvement."
+      },
+      "required": true
+    },
+    {
+      "id": "apply_fix",
+      "label": "Apply Fix",
+      "type": "process",
+      "description": "Implement the identified fix or workaround.",
+      "required": true
+    },
+    {
+      "id": "verify_resolution",
+      "label": "Verify Resolution",
+      "type": "decision",
+      "description": "Confirm that the fix resolves the incident.",
+      "branches": {
+        "resolved": "Service restored to normal.",
+        "not_resolved": "Issue persists — retry or escalate."
+      },
+      "required": true
+    },
+    {
+      "id": "notify_stakeholders",
+      "label": "Notify Stakeholders",
+      "type": "process",
+      "description": "Send status update to affected teams and customers.",
+      "required": true
+    },
+    {
+      "id": "conduct_postmortem",
+      "label": "Conduct Post-Mortem",
+      "type": "process",
+      "description": "Document timeline, root cause, and corrective actions.",
+      "required": false
+    },
+    {
+      "id": "update_runbook",
+      "label": "Update Runbook",
+      "type": "process",
+      "description": "Add learnings to operational runbook.",
+      "required": false
+    },
+    {
+      "id": "close_ticket",
+      "label": "Close Incident Ticket",
+      "type": "process",
+      "description": "Mark incident as resolved and close ticket.",
+      "required": true
+    },
+    {
+      "id": "incident_resolved",
+      "label": "Incident Resolved",
+      "type": "end",
+      "description": "Incident fully resolved and closed.",
+      "required": true
+    },
+    {
+      "id": "incident_escalated_external",
+      "label": "Escalated to External",
+      "type": "end",
+      "description": "Incident escalated to external vendor or authority.",
+      "required": false
+    },
+    {
+      "id": "escalate",
+      "label": "Escalate Incident",
+      "type": "process",
+      "description": "Escalate to senior engineer or management.",
+      "required": false
+    },
+    {
+      "id": "retry_fix",
+      "label": "Retry Fix Application",
+      "type": "process",
+      "description": "Attempt fix again with adjusted parameters.",
+      "required": false,
+      "retry_config": {
+        "max_attempts": 2,
+        "backoff_seconds": [300, 600],
+        "retry_on": ["partial_fix", "transient_failure"]
+      }
+    }
+  ],
+  "transitions": [
+    {"from": "incident_detected", "to": "create_ticket", "condition": null},
+    {"from": "create_ticket", "to": "assess_severity", "condition": null},
+    {"from": "assess_severity", "to": "assign_responder", "condition": "critical"},
+    {"from": "assess_severity", "to": "assign_responder", "condition": "high"},
+    {"from": "assess_severity", "to": "assign_responder", "condition": "medium"},
+    {"from": "assess_severity", "to": "assign_responder", "condition": "low"},
+    {"from": "assign_responder", "to": "investigate", "condition": null},
+    {"from": "investigate", "to": "identify_fix", "condition": null},
+    {"from": "identify_fix", "to": "apply_fix", "condition": "fix_available"},
+    {"from": "identify_fix", "to": "escalate", "condition": "needs_escalation"},
+    {"from": "escalate", "to": "incident_escalated_external", "condition": "external_required"},
+    {"from": "escalate", "to": "investigate", "condition": "internal_escalation"},
+    {"from": "apply_fix", "to": "verify_resolution", "condition": null},
+    {"from": "verify_resolution", "to": "notify_stakeholders", "condition": "resolved"},
+    {"from": "verify_resolution", "to": "retry_fix", "condition": "not_resolved"},
+    {"from": "retry_fix", "to": "apply_fix", "condition": "retry_allowed"},
+    {"from": "retry_fix", "to": "escalate", "condition": "max_retries_exceeded"},
+    {"from": "notify_stakeholders", "to": "conduct_postmortem", "condition": null},
+    {"from": "conduct_postmortem", "to": "update_runbook", "condition": null},
+    {"from": "update_runbook", "to": "close_ticket", "condition": null},
+    {"from": "close_ticket", "to": "incident_resolved", "condition": null}
+  ],
+  "validation_rules": {
+    "max_depth": 18,
+    "max_retries": 2,
+    "required_steps": ["incident_detected", "create_ticket", "assess_severity", "assign_responder", "investigate", "identify_fix", "verify_resolution", "incident_resolved"],
+    "forbidden_direct_transitions": [
+      {"from": "incident_detected", "to": "apply_fix"},
+      {"from": "incident_detected", "to": "incident_resolved"}
+    ]
+  },
+  "end_nodes": ["incident_resolved", "incident_escalated_external"],
+  "decision_rules": {
+    "assess_severity": {
+      "branches": [
+        {"label": "critical", "target": "assign_responder"},
+        {"label": "high", "target": "assign_responder"},
+        {"label": "medium", "target": "assign_responder"},
+        {"label": "low", "target": "assign_responder"}
+      ]
+    },
+    "identify_fix": {
+      "branches": [
+        {"label": "fix_available", "target": "apply_fix"},
+        {"label": "needs_escalation", "target": "escalate"}
+      ]
+    },
+    "verify_resolution": {
+      "branches": [
+        {"label": "resolved", "target": "notify_stakeholders"},
+        {"label": "not_resolved", "target": "retry_fix"}
+      ]
+    }
+  },
+  "flowchart_retry_constraints": [
+    {
+      "node": "retry_fix",
+      "max_attempts": 2,
+      "loop_back_to": "apply_fix"
+    }
+  ]
+}

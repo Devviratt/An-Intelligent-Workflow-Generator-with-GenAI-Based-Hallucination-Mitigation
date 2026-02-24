@@ -1,0 +1,125 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── toolbar ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.02);
+  flex-shrink: 0;
+}
+
+.meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actionBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-mono);
+}
+
+.actionBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+/* ── code area ── */
+.codeWrapper {
+  display: flex;
+  flex: 1;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.65;
+}
+
+.lineNumbers {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 1rem 0.75rem 1rem 1rem;
+  color: rgba(148, 163, 184, 0.3);
+  user-select: none;
+  flex-shrink: 0;
+  border-right: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.15);
+  min-width: 3rem;
+}
+
+.lineNumbers span {
+  display: block;
+}
+
+.code {
+  flex: 1;
+  margin: 0;
+  padding: 1rem;
+  overflow-x: auto;
+  color: var(--text-secondary);
+  white-space: pre;
+  tab-size: 2;
+}
+
+/* ── syntax colours ── */
+:global(.json-key) {
+  color: #93c5fd;
+}
+
+:global(.json-string) {
+  color: #86efac;
+}
+
+:global(.json-number) {
+  color: #fbbf24;
+}
+
+:global(.json-bool) {
+  color: #c084fc;
+}
+
+:global(.json-null) {
+  color: #f87171;
+}
+
+/* ── empty state ── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 0.75rem;
+  color: var(--text-muted);
+}
+
+.emptyIcon {
+  font-size: 2.5rem;
+  font-family: var(--font-mono);
+  opacity: 0.3;
+}
+
+.empty p {
+  font-size: 0.85rem;
+}

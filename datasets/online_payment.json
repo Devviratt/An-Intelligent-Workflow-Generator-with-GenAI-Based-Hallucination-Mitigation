@@ -1,0 +1,189 @@
+{
+  "domain": "online_payment",
+  "display_name": "Online Payment Processing",
+  "description": "End-to-end payment processing workflow including validation, fraud detection, authorization, and settlement.",
+  "version": "1.0.0",
+  "keywords": [
+    "payment", "pay", "card", "credit", "debit", "bank", "transaction",
+    "checkout", "purchase", "billing", "charge", "refund", "fraud",
+    "authorization", "settlement", "gateway", "merchant", "wallet",
+    "stripe", "paypal", "upi", "ach", "wire"
+  ],
+  "start_node": "initiate_payment",
+  "end_node": "transaction_complete",
+  "error_terminal": "transaction_failed",
+  "metadata": {
+    "avg_steps": 8,
+    "sla_seconds": 30,
+    "compliance": ["PCI-DSS", "PSD2"],
+    "criticality": "high"
+  },
+  "steps": [
+    {
+      "id": "initiate_payment",
+      "label": "User Initiates Payment",
+      "type": "start",
+      "description": "Customer submits payment request with amount and method.",
+      "required": true
+    },
+    {
+      "id": "validate_input",
+      "label": "Validate Payment Input",
+      "type": "process",
+      "description": "Validate payment amount, currency, and method format.",
+      "required": true
+    },
+    {
+      "id": "validate_card",
+      "label": "Validate Card Details",
+      "type": "process",
+      "description": "Check card number (Luhn), expiry date, and CVV format.",
+      "required": true
+    },
+    {
+      "id": "check_balance",
+      "label": "Check Account Balance",
+      "type": "process",
+      "description": "Verify sufficient funds in customer account.",
+      "required": false
+    },
+    {
+      "id": "fraud_check",
+      "label": "Fraud Detection Check",
+      "type": "decision",
+      "description": "Evaluate transaction risk score against fraud rules.",
+      "branches": {
+        "passed": "Fraud check passed — proceed to authorization.",
+        "flagged": "Suspicious activity — escalate for manual review.",
+        "blocked": "High risk — block transaction immediately."
+      },
+      "required": true
+    },
+    {
+      "id": "manual_review",
+      "label": "Manual Fraud Review",
+      "type": "process",
+      "description": "Human analyst reviews flagged transaction.",
+      "required": false
+    },
+    {
+      "id": "bank_authorization",
+      "label": "Bank Authorization",
+      "type": "decision",
+      "description": "Submit to issuing bank for authorization.",
+      "branches": {
+        "approved": "Bank approves the transaction.",
+        "declined": "Bank declines — insufficient funds or policy."
+      },
+      "required": true
+    },
+    {
+      "id": "apply_discount",
+      "label": "Apply Discount / Coupon",
+      "type": "process",
+      "description": "Apply promotional discount codes to the transaction.",
+      "required": false
+    },
+    {
+      "id": "process_settlement",
+      "label": "Process Settlement",
+      "type": "process",
+      "description": "Execute fund transfer between accounts.",
+      "required": true
+    },
+    {
+      "id": "generate_receipt",
+      "label": "Generate Receipt",
+      "type": "process",
+      "description": "Create transaction receipt with details.",
+      "required": true
+    },
+    {
+      "id": "send_notification",
+      "label": "Send Notification",
+      "type": "process",
+      "description": "Notify customer via email/SMS of transaction result.",
+      "required": false
+    },
+    {
+      "id": "transaction_complete",
+      "label": "Transaction Complete",
+      "type": "end",
+      "description": "Payment successfully processed and settled.",
+      "required": true
+    },
+    {
+      "id": "transaction_failed",
+      "label": "Transaction Failed",
+      "type": "end",
+      "description": "Payment could not be completed.",
+      "required": false
+    },
+    {
+      "id": "retry_payment",
+      "label": "Retry Payment",
+      "type": "process",
+      "description": "Attempt payment again after transient failure.",
+      "required": false,
+      "retry_config": {
+        "max_attempts": 3,
+        "backoff_seconds": [1, 3, 5],
+        "retry_on": ["timeout", "network_error"]
+      }
+    }
+  ],
+  "transitions": [
+    {"from": "initiate_payment", "to": "validate_input", "condition": null},
+    {"from": "validate_input", "to": "validate_card", "condition": "input_valid"},
+    {"from": "validate_input", "to": "transaction_failed", "condition": "input_invalid"},
+    {"from": "validate_card", "to": "check_balance", "condition": "card_valid"},
+    {"from": "validate_card", "to": "transaction_failed", "condition": "card_invalid"},
+    {"from": "check_balance", "to": "fraud_check", "condition": "balance_sufficient"},
+    {"from": "check_balance", "to": "transaction_failed", "condition": "balance_insufficient"},
+    {"from": "fraud_check", "to": "bank_authorization", "condition": "passed"},
+    {"from": "fraud_check", "to": "manual_review", "condition": "flagged"},
+    {"from": "fraud_check", "to": "transaction_failed", "condition": "blocked"},
+    {"from": "manual_review", "to": "bank_authorization", "condition": "review_approved"},
+    {"from": "manual_review", "to": "transaction_failed", "condition": "review_rejected"},
+    {"from": "bank_authorization", "to": "apply_discount", "condition": "approved"},
+    {"from": "bank_authorization", "to": "retry_payment", "condition": "declined"},
+    {"from": "apply_discount", "to": "process_settlement", "condition": null},
+    {"from": "process_settlement", "to": "generate_receipt", "condition": null},
+    {"from": "generate_receipt", "to": "send_notification", "condition": null},
+    {"from": "send_notification", "to": "transaction_complete", "condition": null},
+    {"from": "retry_payment", "to": "bank_authorization", "condition": "retry_allowed"},
+    {"from": "retry_payment", "to": "transaction_failed", "condition": "max_retries_exceeded"}
+  ],
+  "validation_rules": {
+    "max_depth": 15,
+    "max_retries": 3,
+    "required_steps": ["initiate_payment", "validate_card", "fraud_check", "bank_authorization", "process_settlement", "transaction_complete"],
+    "forbidden_direct_transitions": [
+      {"from": "initiate_payment", "to": "process_settlement"},
+      {"from": "initiate_payment", "to": "transaction_complete"}
+    ]
+  },
+  "end_nodes": ["transaction_complete", "transaction_failed"],
+  "decision_rules": {
+    "fraud_check": {
+      "branches": [
+        {"label": "passed", "target": "bank_authorization"},
+        {"label": "flagged", "target": "manual_review"},
+        {"label": "blocked", "target": "transaction_failed"}
+      ]
+    },
+    "bank_authorization": {
+      "branches": [
+        {"label": "approved", "target": "apply_discount"},
+        {"label": "declined", "target": "retry_payment"}
+      ]
+    }
+  },
+  "flowchart_retry_constraints": [
+    {
+      "node": "retry_payment",
+      "max_attempts": 3,
+      "loop_back_to": "bank_authorization"
+    }
+  ]
+}

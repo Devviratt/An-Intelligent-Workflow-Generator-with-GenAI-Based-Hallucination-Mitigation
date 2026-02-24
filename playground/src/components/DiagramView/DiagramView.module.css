@@ -1,0 +1,316 @@
+/* ================================================================
+   DiagramView — Enterprise Diagram Engine Styles
+   
+   Dark canvas with subtle grid, glassmorphism panels,
+   animated node entrance & edge drawing, hover/select states.
+   ================================================================ */
+
+/* ── Container ── */
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: #0B0F17;
+  outline: none;
+  user-select: none;
+}
+
+/* ── Grid background ── */
+.gridBg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.04) 0%, transparent 70%),
+    linear-gradient(rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+}
+
+/* ── SVG canvas ── */
+.svg {
+  position: relative;
+  display: block;
+  z-index: 1;
+}
+
+/* ── Toolbar ── */
+.toolbar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: rgba(11, 15, 23, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(14px);
+  z-index: 20;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.toolBtn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toolBtn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.toolBtn:active {
+  transform: scale(0.93);
+}
+
+.zoomLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 38px;
+  text-align: center;
+  user-select: none;
+  font-family: var(--font-mono);
+}
+
+.toolDivider {
+  width: 1px;
+  height: 18px;
+  background: rgba(148, 163, 184, 0.12);
+  margin: 0 2px;
+}
+
+/* ── Stats bar ── */
+.statsBar {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  background: rgba(11, 15, 23, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(14px);
+  z-index: 20;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  font-family: var(--font-mono);
+}
+
+.statsDot {
+  color: rgba(148, 163, 184, 0.3);
+  font-size: 0.8rem;
+}
+
+/* ── Node animations ── */
+@keyframes nodeEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nodeShape {
+  animation: nodeEnter 0.35s ease-out both;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.nodeShape:hover {
+  filter: brightness(1.15);
+}
+
+.nodeGlow {
+  opacity: 0.4;
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.nodeLabel {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Focus ring pulse ── */
+@keyframes focusPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.focusRing {
+  animation: focusPulse 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ── Edge animations ── */
+@keyframes edgeDraw {
+  0% {
+    stroke-dashoffset: 800;
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.edgePath path {
+  stroke-dasharray: 800;
+  animation: edgeDraw 0.6s ease-out both;
+}
+
+/* ── Empty state ── */
+.emptyState {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  color: rgba(148, 163, 184, 0.18);
+  animation: emptyPulse 3s ease-in-out infinite;
+}
+
+@keyframes emptyPulse {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.18; }
+  50% { transform: scale(1.08) rotate(8deg); opacity: 0.3; }
+}
+
+.emptyText {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  letter-spacing: 0.01em;
+}
+
+/* ── Legend panel ── */
+.legend {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  background: rgba(11, 15, 23, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(14px);
+  z-index: 20;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendIcon {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid currentColor;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.legendIcon[data-shape="pill"] {
+  border-radius: 6px;
+}
+
+.legendIcon[data-shape="rect"] {
+  border-radius: 3px;
+}
+
+.legendIcon[data-shape="diamond"] {
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  border-radius: 1px;
+  margin: 0 1px;
+}
+
+.legendLabel {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  letter-spacing: 0.02em;
+}
+
+/* ── Tooltip ── */
+.tooltip {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  max-width: 260px;
+  padding: 12px 16px;
+  background: rgba(11, 15, 23, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(14px);
+  z-index: 20;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  animation: tooltipIn 0.2s ease-out;
+}
+
+@keyframes tooltipIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tooltipTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  font-family: var(--font-sans);
+}
+
+.tooltipDesc {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  line-height: 1.4;
+  font-family: var(--font-sans);
+}
+
+.tooltipMeta {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+}

@@ -1,0 +1,244 @@
+{
+  "domain": "ci_cd_deployment",
+  "display_name": "CI/CD Deployment Pipeline",
+  "description": "Continuous integration and deployment workflow covering build, test, security scan, staging, and production release.",
+  "version": "1.0.0",
+  "keywords": [
+    "cicd", "ci/cd", "deploy", "deployment", "build", "release",
+    "pipeline", "jenkins", "github actions", "gitlab", "devops",
+    "continuous integration", "continuous deployment", "staging",
+    "production", "rollback", "canary", "blue-green", "docker",
+    "kubernetes", "container", "artifact", "test", "lint"
+  ],
+  "start_node": "code_push",
+  "end_node": "deployment_complete",
+  "error_terminal": "deployment_failed",
+  "metadata": {
+    "avg_steps": 11,
+    "sla_seconds": 1800,
+    "compliance": ["SOC2"],
+    "criticality": "high"
+  },
+  "steps": [
+    {
+      "id": "code_push",
+      "label": "Code Push Detected",
+      "type": "start",
+      "description": "Developer pushes code to repository.",
+      "required": true
+    },
+    {
+      "id": "lint_check",
+      "label": "Run Linting",
+      "type": "process",
+      "description": "Static analysis and code style checks.",
+      "required": true
+    },
+    {
+      "id": "unit_tests",
+      "label": "Run Unit Tests",
+      "type": "decision",
+      "description": "Execute unit test suite.",
+      "branches": {
+        "tests_passed": "All tests pass.",
+        "tests_failed": "One or more tests failed."
+      },
+      "required": true
+    },
+    {
+      "id": "build_artifact",
+      "label": "Build Artifact",
+      "type": "process",
+      "description": "Compile and build deployable artifact.",
+      "required": true
+    },
+    {
+      "id": "security_scan",
+      "label": "Security Scan",
+      "type": "decision",
+      "description": "Run SAST/DAST security scans.",
+      "branches": {
+        "scan_clean": "No vulnerabilities found.",
+        "vulnerabilities_found": "Security issues detected."
+      },
+      "required": true
+    },
+    {
+      "id": "integration_tests",
+      "label": "Run Integration Tests",
+      "type": "decision",
+      "description": "Execute integration test suite.",
+      "branches": {
+        "integration_passed": "Integration tests pass.",
+        "integration_failed": "Integration tests failed."
+      },
+      "required": true
+    },
+    {
+      "id": "deploy_staging",
+      "label": "Deploy to Staging",
+      "type": "process",
+      "description": "Deploy artifact to staging environment.",
+      "required": true
+    },
+    {
+      "id": "smoke_tests",
+      "label": "Run Smoke Tests",
+      "type": "decision",
+      "description": "Basic smoke tests on staging.",
+      "branches": {
+        "smoke_passed": "Staging environment healthy.",
+        "smoke_failed": "Staging deployment unhealthy."
+      },
+      "required": true
+    },
+    {
+      "id": "approval_gate",
+      "label": "Manual Approval Gate",
+      "type": "decision",
+      "description": "Require manual approval before production.",
+      "branches": {
+        "approved": "Deployment approved.",
+        "rejected": "Deployment rejected."
+      },
+      "required": false
+    },
+    {
+      "id": "deploy_production",
+      "label": "Deploy to Production",
+      "type": "process",
+      "description": "Deploy artifact to production environment.",
+      "required": true
+    },
+    {
+      "id": "health_check",
+      "label": "Production Health Check",
+      "type": "decision",
+      "description": "Verify production deployment health.",
+      "branches": {
+        "healthy": "Production is healthy.",
+        "unhealthy": "Production issues detected."
+      },
+      "required": true
+    },
+    {
+      "id": "rollback",
+      "label": "Rollback Deployment",
+      "type": "process",
+      "description": "Revert to previous stable version.",
+      "required": false
+    },
+    {
+      "id": "notify_team",
+      "label": "Notify Team",
+      "type": "process",
+      "description": "Send deployment status notification.",
+      "required": false
+    },
+    {
+      "id": "deployment_complete",
+      "label": "Deployment Complete",
+      "type": "end",
+      "description": "Deployment successfully completed.",
+      "required": true
+    },
+    {
+      "id": "deployment_failed",
+      "label": "Deployment Failed",
+      "type": "end",
+      "description": "Deployment could not be completed.",
+      "required": false
+    },
+    {
+      "id": "retry_build",
+      "label": "Retry Build",
+      "type": "process",
+      "description": "Retry build after transient failure.",
+      "required": false,
+      "retry_config": {
+        "max_attempts": 2,
+        "backoff_seconds": [30, 60],
+        "retry_on": ["build_timeout", "dependency_error"]
+      }
+    }
+  ],
+  "transitions": [
+    {"from": "code_push", "to": "lint_check", "condition": null},
+    {"from": "lint_check", "to": "unit_tests", "condition": null},
+    {"from": "unit_tests", "to": "build_artifact", "condition": "tests_passed"},
+    {"from": "unit_tests", "to": "deployment_failed", "condition": "tests_failed"},
+    {"from": "build_artifact", "to": "security_scan", "condition": null},
+    {"from": "build_artifact", "to": "retry_build", "condition": "build_failed"},
+    {"from": "retry_build", "to": "build_artifact", "condition": null},
+    {"from": "retry_build", "to": "deployment_failed", "condition": "max_retries_exceeded"},
+    {"from": "security_scan", "to": "integration_tests", "condition": "scan_clean"},
+    {"from": "security_scan", "to": "deployment_failed", "condition": "vulnerabilities_found"},
+    {"from": "integration_tests", "to": "deploy_staging", "condition": "integration_passed"},
+    {"from": "integration_tests", "to": "deployment_failed", "condition": "integration_failed"},
+    {"from": "deploy_staging", "to": "smoke_tests", "condition": null},
+    {"from": "smoke_tests", "to": "approval_gate", "condition": "smoke_passed"},
+    {"from": "smoke_tests", "to": "deployment_failed", "condition": "smoke_failed"},
+    {"from": "approval_gate", "to": "deploy_production", "condition": "approved"},
+    {"from": "approval_gate", "to": "deployment_failed", "condition": "rejected"},
+    {"from": "deploy_production", "to": "health_check", "condition": null},
+    {"from": "health_check", "to": "notify_team", "condition": "healthy"},
+    {"from": "health_check", "to": "rollback", "condition": "unhealthy"},
+    {"from": "rollback", "to": "deployment_failed", "condition": null},
+    {"from": "notify_team", "to": "deployment_complete", "condition": null}
+  ],
+  "validation_rules": {
+    "max_depth": 15,
+    "max_retries": 2,
+    "required_steps": ["code_push", "lint_check", "unit_tests", "build_artifact", "security_scan", "deploy_production", "health_check", "deployment_complete"],
+    "forbidden_direct_transitions": [
+      {"from": "code_push", "to": "deploy_production"},
+      {"from": "code_push", "to": "deployment_complete"}
+    ]
+  },
+  "end_nodes": ["deployment_complete", "deployment_failed"],
+  "decision_rules": {
+    "unit_tests": {
+      "branches": [
+        {"label": "tests_passed", "target": "build_artifact"},
+        {"label": "tests_failed", "target": "deployment_failed"}
+      ]
+    },
+    "security_scan": {
+      "branches": [
+        {"label": "scan_clean", "target": "integration_tests"},
+        {"label": "vulnerabilities_found", "target": "deployment_failed"}
+      ]
+    },
+    "integration_tests": {
+      "branches": [
+        {"label": "integration_passed", "target": "deploy_staging"},
+        {"label": "integration_failed", "target": "deployment_failed"}
+      ]
+    },
+    "smoke_tests": {
+      "branches": [
+        {"label": "smoke_passed", "target": "approval_gate"},
+        {"label": "smoke_failed", "target": "deployment_failed"}
+      ]
+    },
+    "approval_gate": {
+      "branches": [
+        {"label": "approved", "target": "deploy_production"},
+        {"label": "rejected", "target": "deployment_failed"}
+      ]
+    },
+    "health_check": {
+      "branches": [
+        {"label": "healthy", "target": "notify_team"},
+        {"label": "unhealthy", "target": "rollback"}
+      ]
+    }
+  },
+  "flowchart_retry_constraints": [
+    {
+      "node": "retry_build",
+      "max_attempts": 2,
+      "loop_back_to": "build_artifact"
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+/* ================================================================
+   API Service Layer — single source of truth for all backend calls.
+
+   - AbortController for cancellation
+   - Configurable timeout
+   - Structured error extraction
+   - No console.log in production
+   ================================================================ */
+
+import type {
+  DomainListResponse,
+  GenerateRequest,
+  GenerateResponse,
+  HealthResponse,
+} from "@/types";
+
+const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+const DEFAULT_TIMEOUT_MS = 30_000;
+
+// ── Error class ──
+
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly body: unknown = null,
+  ) {
+    super(message);
+    this.name = "ApiRequestError";
+  }
+}
+
+// ── Internal helpers ──
+
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...init.headers,
+      },
+    });
+
+    const body: unknown = await res.json();
+
+    if (!res.ok) {
+      const msg =
+        typeof body === "object" && body !== null && "message" in body
+          ? String((body as Record<string, unknown>).message)
+          : `HTTP ${res.status}`;
+      throw new ApiRequestError(msg, res.status, body);
+    }
+
+    return body as T;
+  } catch (err) {
+    if (err instanceof ApiRequestError) throw err;
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new ApiRequestError("Request timed out", 408);
+    }
+    throw new ApiRequestError(
+      err instanceof Error ? err.message : "Network error",
+      0,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ── Public API ──
+
+export function generateWorkflow(
+  payload: GenerateRequest,
+  signal?: AbortSignal,
+): Promise<GenerateResponse> {
+  return request<GenerateResponse>("/api/v1/generate", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    signal,
+  });
+}
+
+export function fetchDomains(): Promise<DomainListResponse> {
+  return request<DomainListResponse>("/api/v1/domains");
+}
+
+export function fetchHealth(): Promise<HealthResponse> {
+  return request<HealthResponse>("/api/v1/health");
+}

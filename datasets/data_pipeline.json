@@ -1,0 +1,211 @@
+{
+  "domain": "data_pipeline",
+  "display_name": "Data Pipeline Processing",
+  "description": "ETL/ELT data pipeline workflow covering ingestion, validation, transformation, quality checks, and loading.",
+  "version": "1.0.0",
+  "keywords": [
+    "data", "pipeline", "etl", "elt", "ingestion", "transformation",
+    "extract", "transform", "load", "batch", "streaming", "spark",
+    "warehouse", "lake", "schema", "quality", "validation", "cleansing",
+    "deduplicate", "aggregate", "analytics", "bigdata", "hadoop"
+  ],
+  "start_node": "trigger_pipeline",
+  "end_node": "pipeline_complete",
+  "error_terminal": "pipeline_failed",
+  "metadata": {
+    "avg_steps": 10,
+    "sla_seconds": 7200,
+    "compliance": ["SOC2", "HIPAA"],
+    "criticality": "high"
+  },
+  "steps": [
+    {
+      "id": "trigger_pipeline",
+      "label": "Trigger Pipeline",
+      "type": "start",
+      "description": "Pipeline execution triggered by schedule or event.",
+      "required": true
+    },
+    {
+      "id": "extract_data",
+      "label": "Extract Data from Sources",
+      "type": "process",
+      "description": "Pull data from configured source systems.",
+      "required": true
+    },
+    {
+      "id": "validate_schema",
+      "label": "Validate Source Schema",
+      "type": "decision",
+      "description": "Check source data matches expected schema.",
+      "branches": {
+        "schema_valid": "Schema matches expectations.",
+        "schema_mismatch": "Schema has changed — needs handling."
+      },
+      "required": true
+    },
+    {
+      "id": "handle_schema_change",
+      "label": "Handle Schema Change",
+      "type": "process",
+      "description": "Adapt to schema changes — log, alert, or auto-evolve.",
+      "required": false
+    },
+    {
+      "id": "cleanse_data",
+      "label": "Cleanse Data",
+      "type": "process",
+      "description": "Remove nulls, fix formatting, standardize values.",
+      "required": true
+    },
+    {
+      "id": "deduplicate",
+      "label": "Deduplicate Records",
+      "type": "process",
+      "description": "Remove duplicate records based on key columns.",
+      "required": true
+    },
+    {
+      "id": "transform_data",
+      "label": "Transform Data",
+      "type": "process",
+      "description": "Apply business logic, aggregations, and derivations.",
+      "required": true
+    },
+    {
+      "id": "quality_check",
+      "label": "Data Quality Check",
+      "type": "decision",
+      "description": "Run quality rules — completeness, accuracy, consistency.",
+      "branches": {
+        "quality_passed": "Data meets quality thresholds.",
+        "quality_failed": "Data quality below acceptable level."
+      },
+      "required": true
+    },
+    {
+      "id": "quarantine_data",
+      "label": "Quarantine Bad Data",
+      "type": "process",
+      "description": "Move failed records to quarantine for review.",
+      "required": false
+    },
+    {
+      "id": "load_data",
+      "label": "Load Data to Target",
+      "type": "process",
+      "description": "Write processed data to target warehouse/lake.",
+      "required": true
+    },
+    {
+      "id": "verify_load",
+      "label": "Verify Load Integrity",
+      "type": "decision",
+      "description": "Confirm record counts and checksums match.",
+      "branches": {
+        "load_success": "Load verified successfully.",
+        "load_mismatch": "Record count or checksum mismatch."
+      },
+      "required": true
+    },
+    {
+      "id": "update_catalog",
+      "label": "Update Data Catalog",
+      "type": "process",
+      "description": "Update metadata catalog with lineage and stats.",
+      "required": false
+    },
+    {
+      "id": "send_report",
+      "label": "Send Pipeline Report",
+      "type": "process",
+      "description": "Generate and distribute pipeline execution report.",
+      "required": false
+    },
+    {
+      "id": "pipeline_complete",
+      "label": "Pipeline Complete",
+      "type": "end",
+      "description": "Pipeline executed successfully.",
+      "required": true
+    },
+    {
+      "id": "pipeline_failed",
+      "label": "Pipeline Failed",
+      "type": "end",
+      "description": "Pipeline execution failed.",
+      "required": false
+    },
+    {
+      "id": "retry_load",
+      "label": "Retry Data Load",
+      "type": "process",
+      "description": "Retry loading data after transient failure.",
+      "required": false,
+      "retry_config": {
+        "max_attempts": 3,
+        "backoff_seconds": [60, 300, 900],
+        "retry_on": ["connection_timeout", "write_conflict"]
+      }
+    }
+  ],
+  "transitions": [
+    {"from": "trigger_pipeline", "to": "extract_data", "condition": null},
+    {"from": "extract_data", "to": "validate_schema", "condition": null},
+    {"from": "validate_schema", "to": "cleanse_data", "condition": "schema_valid"},
+    {"from": "validate_schema", "to": "handle_schema_change", "condition": "schema_mismatch"},
+    {"from": "handle_schema_change", "to": "cleanse_data", "condition": "adapted"},
+    {"from": "handle_schema_change", "to": "pipeline_failed", "condition": "cannot_adapt"},
+    {"from": "cleanse_data", "to": "deduplicate", "condition": null},
+    {"from": "deduplicate", "to": "transform_data", "condition": null},
+    {"from": "transform_data", "to": "quality_check", "condition": null},
+    {"from": "quality_check", "to": "load_data", "condition": "quality_passed"},
+    {"from": "quality_check", "to": "quarantine_data", "condition": "quality_failed"},
+    {"from": "quarantine_data", "to": "load_data", "condition": "partial_load"},
+    {"from": "quarantine_data", "to": "pipeline_failed", "condition": "abort"},
+    {"from": "load_data", "to": "verify_load", "condition": null},
+    {"from": "verify_load", "to": "update_catalog", "condition": "load_success"},
+    {"from": "verify_load", "to": "retry_load", "condition": "load_mismatch"},
+    {"from": "retry_load", "to": "load_data", "condition": "retry_allowed"},
+    {"from": "retry_load", "to": "pipeline_failed", "condition": "max_retries_exceeded"},
+    {"from": "update_catalog", "to": "send_report", "condition": null},
+    {"from": "send_report", "to": "pipeline_complete", "condition": null}
+  ],
+  "validation_rules": {
+    "max_depth": 18,
+    "max_retries": 3,
+    "required_steps": ["trigger_pipeline", "extract_data", "validate_schema", "cleanse_data", "transform_data", "quality_check", "load_data", "verify_load", "pipeline_complete"],
+    "forbidden_direct_transitions": [
+      {"from": "trigger_pipeline", "to": "load_data"},
+      {"from": "trigger_pipeline", "to": "pipeline_complete"}
+    ]
+  },
+  "end_nodes": ["pipeline_complete", "pipeline_failed"],
+  "decision_rules": {
+    "validate_schema": {
+      "branches": [
+        {"label": "schema_valid", "target": "cleanse_data"},
+        {"label": "schema_mismatch", "target": "handle_schema_change"}
+      ]
+    },
+    "quality_check": {
+      "branches": [
+        {"label": "quality_passed", "target": "load_data"},
+        {"label": "quality_failed", "target": "quarantine_data"}
+      ]
+    },
+    "verify_load": {
+      "branches": [
+        {"label": "load_success", "target": "update_catalog"},
+        {"label": "load_mismatch", "target": "retry_load"}
+      ]
+    }
+  },
+  "flowchart_retry_constraints": [
+    {
+      "node": "retry_load",
+      "max_attempts": 3,
+      "loop_back_to": "load_data"
+    }
+  ]
+}
