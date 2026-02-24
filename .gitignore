@@ -24,3 +24,9 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+
+# Node/frontend generated
+node_modules/
+playground/node_modules/
+playground/.vite/
+*.tsbuildinfo
