@@ -25,6 +25,7 @@ from src.api.landing import router as landing_router
 from src.api.middleware import RequestLoggingMiddleware
 from src.api.routers.domains import router as domains_router
 from src.api.routers.health import router as health_router
+from src.api.routers.rag import router as rag_router
 from src.api.routers.workflows import router as workflows_router
 from src.pipeline import Pipeline
 
@@ -140,3 +141,4 @@ app.include_router(landing_router)
 app.include_router(workflows_router, prefix="/api/v1")
 app.include_router(domains_router, prefix="/api/v1")
 app.include_router(health_router, prefix="/api/v1")
+app.include_router(rag_router)

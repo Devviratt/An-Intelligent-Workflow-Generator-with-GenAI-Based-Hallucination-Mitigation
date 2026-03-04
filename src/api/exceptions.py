@@ -14,6 +14,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import ORJSONResponse
 
 from src.engines.flowchart_generator import FlowchartGenerationError
+from src.engines.llm_flowchart_generator import LLMFlowchartGenerationError
+from src.engines.llm_workflow_generator import LLMWorkflowGenerationError
 from src.engines.workflow_generator import WorkflowGenerationError
 
 logger = logging.getLogger(__name__)
@@ -73,6 +75,38 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=422,
             content={
                 "error_type": "FlowchartGenerationError",
+                "message": str(exc),
+                "details": None,
+            },
+        )
+
+    @app.exception_handler(LLMWorkflowGenerationError)
+    async def llm_workflow_generation_error_handler(
+        request: Request,
+        exc: LLMWorkflowGenerationError,
+    ) -> ORJSONResponse:
+        """LLM workflow generator raised an error."""
+        logger.warning("LLMWorkflowGenerationError: %s", exc)
+        return ORJSONResponse(
+            status_code=422,
+            content={
+                "error_type": "LLMWorkflowGenerationError",
+                "message": str(exc),
+                "details": None,
+            },
+        )
+
+    @app.exception_handler(LLMFlowchartGenerationError)
+    async def llm_flowchart_generation_error_handler(
+        request: Request,
+        exc: LLMFlowchartGenerationError,
+    ) -> ORJSONResponse:
+        """LLM flowchart generator raised an error."""
+        logger.warning("LLMFlowchartGenerationError: %s", exc)
+        return ORJSONResponse(
+            status_code=422,
+            content={
+                "error_type": "LLMFlowchartGenerationError",
                 "message": str(exc),
                 "details": None,
             },

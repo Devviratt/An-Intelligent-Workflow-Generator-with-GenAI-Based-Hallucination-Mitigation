@@ -49,8 +49,8 @@ class Settings:
 
     # Local model (optional)
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "mistral"
-    ollama_timeout: float = 30.0
+    ollama_model: str = "phi3:mini"
+    ollama_timeout: float = 300.0  # 5 minutes for phi3:mini inference with RAG
     use_local_model: bool = False
 
     # API

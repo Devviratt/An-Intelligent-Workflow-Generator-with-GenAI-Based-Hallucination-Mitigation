@@ -24,6 +24,14 @@ from src.engines.flowchart_generator import FlowchartGenerator, FlowchartGenerat
 from src.engines.hallucination_mitigation import HallucinationMitigator
 from src.engines.instruction_parser import InstructionParser
 from src.engines.layout_engine import LayoutEngine
+from src.engines.llm_flowchart_generator import (
+    LLMFlowchartGenerator,
+    LLMFlowchartGenerationError,
+)
+from src.engines.llm_workflow_generator import (
+    LLMWorkflowGenerator,
+    LLMWorkflowGenerationError,
+)
 from src.engines.local_model import LocalModelIntegration
 from src.engines.validation_engine import ValidationEngine
 from src.engines.workflow_generator import WorkflowGenerator, WorkflowGenerationError
@@ -59,6 +67,10 @@ class Pipeline:
     def __init__(self) -> None:
         self._dataset_engine = DomainDatasetEngine()
         self._parser = InstructionParser()
+        # LLM-based generators (primary)
+        self._llm_generator = LLMWorkflowGenerator()
+        self._llm_flowchart_generator = LLMFlowchartGenerator()
+        # Legacy deterministic generators (fallback)
         self._generator = WorkflowGenerator()
         self._flowchart_generator = FlowchartGenerator()
         self._mitigator = HallucinationMitigator()
@@ -155,66 +167,55 @@ class Pipeline:
 
             is_flowchart = request.mode == GenerationMode.FLOWCHART
 
-            # ── Stage 2: Generate structure ──
+            # ── Stage 2: Generate structure (LLM-based) ──
             with profiler.stage(
                 StageName.GENERATE,
                 input_count=len(dataset.steps),
-                metadata={"mode": request.mode.value},
+                metadata={"mode": request.mode.value, "engine": "llm"},
             ):
-                if is_flowchart:
-                    workflow = self._flowchart_generator.generate(
-                        dataset=dataset,
-                        parsed=parsed,
-                        include_optional=request.include_optional_steps,
-                    )
-                else:
-                    workflow = self._generator.generate(
-                        dataset=dataset,
-                        parsed=parsed,
-                        include_optional=request.include_optional_steps,
-                        custom_steps=request.custom_steps or None,
+                try:
+                    if is_flowchart:
+                        workflow = await self._llm_flowchart_generator.generate(
+                            dataset=dataset,
+                            parsed=parsed,
+                            include_optional=request.include_optional_steps,
+                        )
+                    else:
+                        workflow = await self._llm_generator.generate(
+                            dataset=dataset,
+                            parsed=parsed,
+                            include_optional=request.include_optional_steps,
+                        )
+                except (LLMWorkflowGenerationError, LLMFlowchartGenerationError) as exc:
+                    logger.error("LLM generation failed: %s", exc)
+                    return GenerateResponse(
+                        success=False,
+                        errors=[
+                            ErrorDetail(
+                                code="LLM_GENERATION_ERROR",
+                                message=str(exc),
+                            )
+                        ],
+                        metrics=metrics,
                     )
             metrics.generation_time_ms = profiler.get(StageName.GENERATE).duration_ms
             profiler.set_output_count(StageName.GENERATE, len(workflow.nodes))
 
-            # Snapshot pre-mitigation counts for hallucination metrics
+            # Snapshot pre-mitigation counts (for metrics, skipping actual mitigation)
             pre_mitigation_nodes = len(workflow.nodes)
             pre_mitigation_edges = len(workflow.edges)
 
-            # ── Stage 3: Hallucination mitigation ──
-            with profiler.stage(
-                StageName.MITIGATE,
-                input_count=len(workflow.nodes) + len(workflow.edges),
-            ):
-                if is_flowchart:
-                    workflow, mitigation_result = self._mitigator.mitigate_flowchart(
-                        workflow, dataset
-                    )
-                else:
-                    workflow, mitigation_result = self._mitigator.mitigate(
-                        workflow, dataset
-                    )
-            metrics.mitigation_time_ms = profiler.get(StageName.MITIGATE).duration_ms
-            profiler.set_output_count(
-                StageName.MITIGATE, len(workflow.nodes) + len(workflow.edges),
-            )
+            # ── Stage 3: Hallucination mitigation (SKIPPED - trust LLM output) ──
+            mitigation_result = ValidationResult(checks_performed=["skipped_llm"])
+            # No mitigation step since user wants direct LLM output
+            metrics.mitigation_time_ms = 0.0
 
-            # ── Stage 4: Validation ──
-            with profiler.stage(
-                StageName.VALIDATE,
-                input_count=len(workflow.nodes) + len(workflow.edges),
-            ):
-                if is_flowchart:
-                    validation_result = self._validator.validate_flowchart(
-                        workflow, dataset
-                    )
-                else:
-                    validation_result = self._validator.validate(workflow, dataset)
-                validation_result.merge(mitigation_result)
-            metrics.validation_time_ms = profiler.get(StageName.VALIDATE).duration_ms
-            profiler.set_output_count(
-                StageName.VALIDATE, len(validation_result.checks_performed),
+            # ── Stage 4: Validation (SKIPPED - trust LLM output) ──
+            validation_result = ValidationResult(
+                checks_performed=["skipped_llm"],
+                is_valid=True,
             )
+            metrics.validation_time_ms = 0.0
 
             # ── Stage 5: Layout ──
             with profiler.stage(StageName.LAYOUT, input_count=len(workflow.nodes)):

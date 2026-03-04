@@ -16,12 +16,18 @@ Does NOT touch any generation logic — purely observational.
 
 from __future__ import annotations
 
-import resource
+import sys
 import time
 from contextlib import contextmanager
 from typing import Any, Generator
 
 from src.observability.models import StageMetric, StageName
+
+# resource module only available on Unix/Linux
+if sys.platform != "win32":
+    import resource
+else:
+    resource = None
 
 
 class StageProfiler:
@@ -131,7 +137,10 @@ class StageProfiler:
 
     @staticmethod
     def _current_rss_kb() -> float:
-        """Get current process RSS in kilobytes (macOS/Linux)."""
+        """Get current process RSS in kilobytes (macOS/Linux) or 0 on Windows."""
+        if resource is None:
+            # Windows: resource module not available
+            return 0.0
         try:
             usage = resource.getrusage(resource.RUSAGE_SELF)
             # macOS reports in bytes, Linux in KB
