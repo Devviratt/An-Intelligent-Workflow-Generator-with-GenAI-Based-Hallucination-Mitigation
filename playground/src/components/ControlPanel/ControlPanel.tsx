@@ -1,11 +1,6 @@
-/* ================================================================
-   ControlPanel — left sidebar with instruction input, mode toggle,
-   domain selector, and generate button.
-   ================================================================ */
-
 import { memo, useCallback, useRef, useState } from "react";
-import type { DomainInfo, GenerationMode } from "@/types";
 import type { GenerationStatus } from "@/hooks";
+import type { DomainInfo, GenerationMode } from "@/types";
 import styles from "./ControlPanel.module.css";
 
 interface ControlPanelProps {
@@ -14,6 +9,7 @@ interface ControlPanelProps {
   error: string | null;
   onGenerate: (instruction: string, mode: GenerationMode, domainHint?: string) => void;
   onCancel: () => void;
+  onReset: () => void;
 }
 
 export const ControlPanel = memo(function ControlPanel({
@@ -22,6 +18,7 @@ export const ControlPanel = memo(function ControlPanel({
   error,
   onGenerate,
   onCancel,
+  onReset,
 }: ControlPanelProps) {
   const [instruction, setInstruction] = useState("");
   const [mode, setMode] = useState<GenerationMode>("workflow");
@@ -34,85 +31,102 @@ export const ControlPanel = memo(function ControlPanel({
     const trimmed = instruction.trim();
     if (!trimmed || isLoading) return;
     onGenerate(trimmed, mode, domainHint || undefined);
-  }, [instruction, mode, domainHint, isLoading, onGenerate]);
+  }, [domainHint, instruction, isLoading, mode, onGenerate]);
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-        e.preventDefault();
+    (event: React.KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
         handleSubmit();
       }
     },
     [handleSubmit],
   );
 
+  const handleReset = useCallback(() => {
+    setInstruction("");
+    setMode("workflow");
+    setDomainHint("");
+    onReset();
+    textareaRef.current?.focus();
+  }, [onReset]);
+
   return (
     <aside className={`glass ${styles.panel}`}>
-      {/* Header */}
       <div className={styles.header}>
-        <div className={styles.logo}>
-          <span className={styles.logoIcon}>⚡</span>
-          <div>
-            <h1 className={styles.title}>Workflow Generator</h1>
-            <p className={styles.subtitle}>API Playground</p>
-          </div>
-        </div>
+        <span className={styles.eyebrow}>Prompt Builder</span>
+        <h2 className={styles.title}>Describe the workflow you want to visualize</h2>
+        <p className={styles.subtitle}>
+          Enter an instruction, choose a rendering mode, and generate a graph
+          from the backend workflow response.
+        </p>
       </div>
 
-      {/* Instruction */}
       <label className={styles.label}>Instruction</label>
       <textarea
         ref={textareaRef}
         className={styles.textarea}
-        placeholder="Describe the workflow you want to generate…"
+        placeholder='Example: "Build a CI/CD pipeline with tests, approval, deployment, and rollback branches"'
         value={instruction}
-        onChange={(e) => setInstruction(e.target.value)}
+        onChange={(event) => setInstruction(event.target.value)}
         onKeyDown={handleKeyDown}
-        rows={5}
+        rows={7}
         disabled={isLoading}
         spellCheck={false}
       />
-      <span className={styles.hint}>⌘ + Enter to generate</span>
 
-      {/* Mode toggle */}
-      <label className={styles.label}>Mode</label>
-      <div className={styles.toggleGroup}>
+      <div className={styles.hintRow}>
+        <span className={styles.hint}>Ctrl/Cmd + Enter to generate</span>
         <button
-          className={`${styles.toggleBtn} ${mode === "workflow" ? styles.active : ""}`}
-          onClick={() => setMode("workflow")}
-          disabled={isLoading}
+          className={styles.exampleBtn}
           type="button"
-        >
-          Workflow
-        </button>
-        <button
-          className={`${styles.toggleBtn} ${mode === "flowchart" ? styles.active : ""}`}
-          onClick={() => setMode("flowchart")}
           disabled={isLoading}
-          type="button"
+          onClick={() =>
+            setInstruction(
+              "Build a CI/CD deployment pipeline with approval, production health checks, and rollback branches",
+            )
+          }
         >
-          Flowchart
+          Use sample
         </button>
       </div>
 
-      {/* Domain hint */}
-      <label className={styles.label}>Domain (optional)</label>
+      <label className={styles.label}>Mode</label>
+      <select
+        className={styles.select}
+        value={mode}
+        onChange={(event) => setMode(event.target.value as GenerationMode)}
+        disabled={isLoading}
+      >
+        <option value="workflow">workflow</option>
+        <option value="flowchart">flowchart</option>
+      </select>
+
+      <label className={styles.label}>Domain</label>
       <select
         className={styles.select}
         value={domainHint}
-        onChange={(e) => setDomainHint(e.target.value)}
+        onChange={(event) => setDomainHint(event.target.value)}
         disabled={isLoading}
       >
         <option value="">Auto-detect</option>
-        {domains.map((d) => (
-          <option key={d.domain} value={d.domain}>
-            {d.display_name}
+        {domains.map((domain) => (
+          <option key={domain.domain} value={domain.domain}>
+            {domain.display_name}
           </option>
         ))}
       </select>
 
-      {/* Actions */}
       <div className={styles.actions}>
+        <button
+          className={`${styles.btn} ${styles.btnSecondary}`}
+          onClick={handleReset}
+          disabled={isLoading && !instruction.trim()}
+          type="button"
+        >
+          Reset
+        </button>
+
         {isLoading ? (
           <button
             className={`${styles.btn} ${styles.btnCancel}`}
@@ -128,15 +142,23 @@ export const ControlPanel = memo(function ControlPanel({
             disabled={!instruction.trim()}
             type="button"
           >
-            Generate
+            Generate Workflow
           </button>
         )}
       </div>
 
-      {/* Error */}
+      <div className={styles.infoCard}>
+        <h3 className={styles.infoTitle}>What you’ll see</h3>
+        <ul className={styles.infoList}>
+          <li>Typed nodes for start, process, decision, and end states</li>
+          <li>Directed arrows with animated edges and branch labels</li>
+          <li>Zoom, pan, fullscreen, SVG export, and validation context</li>
+        </ul>
+      </div>
+
       {error && (
         <div className={styles.errorPanel}>
-          <span className={styles.errorIcon}>⚠</span>
+          <span className={styles.errorIcon}>!</span>
           <span>{error}</span>
         </div>
       )}

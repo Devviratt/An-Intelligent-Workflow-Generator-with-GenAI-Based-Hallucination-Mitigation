@@ -76,7 +76,7 @@ async def process_query(request: ProcessQueryRequest) -> ProcessQueryResponse:
         from rag.retriever import Retriever
         
         retriever = Retriever()
-        retrieved_results = retriever.retrieve(query=user_query, k=top_k)
+        retrieved_results = retriever.retrieve(query_embedding=embedding, k=top_k)
         
         if retrieved_results is None:
             logger.error("Retriever returned None for query: %s", user_query)

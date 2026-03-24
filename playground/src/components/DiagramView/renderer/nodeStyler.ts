@@ -169,6 +169,19 @@ export function getNodeStyle(type: NodeType, isRetryTarget = false): NodeStyle {
   return base;
 }
 
+export function getInvalidNodeStyle(base: NodeStyle): NodeStyle {
+  return {
+    ...base,
+    fill: "rgba(239, 68, 68, 0.12)",
+    fillHover: "rgba(239, 68, 68, 0.16)",
+    stroke: "rgba(248, 113, 113, 0.7)",
+    strokeHover: "rgba(252, 165, 165, 0.9)",
+    text: "#fecaca",
+    glow: "rgba(239, 68, 68, 0.2)",
+    dashArray: "7 3",
+  };
+}
+
 /** Shadow filter scaled by depth */
 export function getShadowParams(depth: number): {
   offsetY: number;

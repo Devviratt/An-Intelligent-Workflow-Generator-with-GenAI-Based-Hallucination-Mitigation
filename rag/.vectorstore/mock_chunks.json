@@ -1,0 +1,1092 @@
+[
+  {
+    "id": "ci_cd_deployment_description",
+    "content": "ci_cd_deployment: Continuous integration and deployment workflow covering build, test, security scan, staging, and production release.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_code_push",
+    "content": "Code Push Detected: Developer pushes code to repository.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_lint_check",
+    "content": "Run Linting: Static analysis and code style checks.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_unit_tests",
+    "content": "Run Unit Tests: Execute unit test suite.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_build_artifact",
+    "content": "Build Artifact: Compile and build deployable artifact.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_security_scan",
+    "content": "Security Scan: Run SAST/DAST security scans.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_integration_tests",
+    "content": "Run Integration Tests: Execute integration test suite.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_deploy_staging",
+    "content": "Deploy to Staging: Deploy artifact to staging environment.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_smoke_tests",
+    "content": "Run Smoke Tests: Basic smoke tests on staging.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_approval_gate",
+    "content": "Manual Approval Gate: Require manual approval before production.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_deploy_production",
+    "content": "Deploy to Production: Deploy artifact to production environment.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_health_check",
+    "content": "Production Health Check: Verify production deployment health.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_rollback",
+    "content": "Rollback Deployment: Revert to previous stable version.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_notify_team",
+    "content": "Notify Team: Send deployment status notification.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_deployment_complete",
+    "content": "Deployment Complete: Deployment successfully completed.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_deployment_failed",
+    "content": "Deployment Failed: Deployment could not be completed.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_retry_build",
+    "content": "Retry Build: Retry build after transient failure.",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_0",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_1",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_2",
+    "content": "Transition: ? \u2192 ? [tests_passed]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_3",
+    "content": "Transition: ? \u2192 ? [tests_failed]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_4",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_5",
+    "content": "Transition: ? \u2192 ? [build_failed]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_6",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_7",
+    "content": "Transition: ? \u2192 ? [max_retries_exceeded]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_8",
+    "content": "Transition: ? \u2192 ? [scan_clean]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_9",
+    "content": "Transition: ? \u2192 ? [vulnerabilities_found]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_10",
+    "content": "Transition: ? \u2192 ? [integration_passed]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_11",
+    "content": "Transition: ? \u2192 ? [integration_failed]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_12",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_13",
+    "content": "Transition: ? \u2192 ? [smoke_passed]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_14",
+    "content": "Transition: ? \u2192 ? [smoke_failed]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_15",
+    "content": "Transition: ? \u2192 ? [approved]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_16",
+    "content": "Transition: ? \u2192 ? [rejected]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_17",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_18",
+    "content": "Transition: ? \u2192 ? [healthy]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_19",
+    "content": "Transition: ? \u2192 ? [unhealthy]",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_20",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "ci_cd_deployment_transition_21",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "ci_cd_deployment"
+  },
+  {
+    "id": "data_pipeline_description",
+    "content": "data_pipeline: ETL/ELT data pipeline workflow covering ingestion, validation, transformation, quality checks, and loading.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_trigger_pipeline",
+    "content": "Trigger Pipeline: Pipeline execution triggered by schedule or event.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_extract_data",
+    "content": "Extract Data from Sources: Pull data from configured source systems.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_validate_schema",
+    "content": "Validate Source Schema: Check source data matches expected schema.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_handle_schema_change",
+    "content": "Handle Schema Change: Adapt to schema changes \u2014 log, alert, or auto-evolve.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_cleanse_data",
+    "content": "Cleanse Data: Remove nulls, fix formatting, standardize values.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_deduplicate",
+    "content": "Deduplicate Records: Remove duplicate records based on key columns.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transform_data",
+    "content": "Transform Data: Apply business logic, aggregations, and derivations.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_quality_check",
+    "content": "Data Quality Check: Run quality rules \u2014 completeness, accuracy, consistency.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_quarantine_data",
+    "content": "Quarantine Bad Data: Move failed records to quarantine for review.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_load_data",
+    "content": "Load Data to Target: Write processed data to target warehouse/lake.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_verify_load",
+    "content": "Verify Load Integrity: Confirm record counts and checksums match.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_update_catalog",
+    "content": "Update Data Catalog: Update metadata catalog with lineage and stats.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_send_report",
+    "content": "Send Pipeline Report: Generate and distribute pipeline execution report.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_pipeline_complete",
+    "content": "Pipeline Complete: Pipeline executed successfully.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_pipeline_failed",
+    "content": "Pipeline Failed: Pipeline execution failed.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_retry_load",
+    "content": "Retry Data Load: Retry loading data after transient failure.",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_0",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_1",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_2",
+    "content": "Transition: ? \u2192 ? [schema_valid]",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_3",
+    "content": "Transition: ? \u2192 ? [schema_mismatch]",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_4",
+    "content": "Transition: ? \u2192 ? [adapted]",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_5",
+    "content": "Transition: ? \u2192 ? [cannot_adapt]",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_6",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_7",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_8",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_9",
+    "content": "Transition: ? \u2192 ? [quality_passed]",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_10",
+    "content": "Transition: ? \u2192 ? [quality_failed]",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_11",
+    "content": "Transition: ? \u2192 ? [partial_load]",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_12",
+    "content": "Transition: ? \u2192 ? [abort]",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_13",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_14",
+    "content": "Transition: ? \u2192 ? [load_success]",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_15",
+    "content": "Transition: ? \u2192 ? [load_mismatch]",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_16",
+    "content": "Transition: ? \u2192 ? [retry_allowed]",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_17",
+    "content": "Transition: ? \u2192 ? [max_retries_exceeded]",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_18",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "data_pipeline_transition_19",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "data_pipeline"
+  },
+  {
+    "id": "incident_response_description",
+    "content": "incident_response: Incident detection, triage, investigation, resolution, and post-mortem workflow for IT operations.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_incident_detected",
+    "content": "Incident Detected: Monitoring system or user reports an incident.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_create_ticket",
+    "content": "Create Incident Ticket: Log incident with initial details in ticketing system.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_assess_severity",
+    "content": "Assess Severity: Determine incident severity level (P1-P4).",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_assign_responder",
+    "content": "Assign Responder: Assign on-call engineer or response team.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_investigate",
+    "content": "Investigate Root Cause: Analyze logs, metrics, and traces to identify cause.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_identify_fix",
+    "content": "Identify Fix: Determine if a fix is available and applicable.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_apply_fix",
+    "content": "Apply Fix: Implement the identified fix or workaround.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_verify_resolution",
+    "content": "Verify Resolution: Confirm that the fix resolves the incident.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_notify_stakeholders",
+    "content": "Notify Stakeholders: Send status update to affected teams and customers.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_conduct_postmortem",
+    "content": "Conduct Post-Mortem: Document timeline, root cause, and corrective actions.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_update_runbook",
+    "content": "Update Runbook: Add learnings to operational runbook.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_close_ticket",
+    "content": "Close Incident Ticket: Mark incident as resolved and close ticket.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_incident_resolved",
+    "content": "Incident Resolved: Incident fully resolved and closed.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_incident_escalated_external",
+    "content": "Escalated to External: Incident escalated to external vendor or authority.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_escalate",
+    "content": "Escalate Incident: Escalate to senior engineer or management.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_retry_fix",
+    "content": "Retry Fix Application: Attempt fix again with adjusted parameters.",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_0",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_1",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_2",
+    "content": "Transition: ? \u2192 ? [critical]",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_3",
+    "content": "Transition: ? \u2192 ? [high]",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_4",
+    "content": "Transition: ? \u2192 ? [medium]",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_5",
+    "content": "Transition: ? \u2192 ? [low]",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_6",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_7",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_8",
+    "content": "Transition: ? \u2192 ? [fix_available]",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_9",
+    "content": "Transition: ? \u2192 ? [needs_escalation]",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_10",
+    "content": "Transition: ? \u2192 ? [external_required]",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_11",
+    "content": "Transition: ? \u2192 ? [internal_escalation]",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_12",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_13",
+    "content": "Transition: ? \u2192 ? [resolved]",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_14",
+    "content": "Transition: ? \u2192 ? [not_resolved]",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_15",
+    "content": "Transition: ? \u2192 ? [retry_allowed]",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_16",
+    "content": "Transition: ? \u2192 ? [max_retries_exceeded]",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_17",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_18",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_19",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "incident_response"
+  },
+  {
+    "id": "incident_response_transition_20",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "incident_response"
+  },
+  {
+    "id": "online_payment_description",
+    "content": "online_payment: End-to-end payment processing workflow including validation, fraud detection, authorization, and settlement.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_initiate_payment",
+    "content": "User Initiates Payment: Customer submits payment request with amount and method.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_validate_input",
+    "content": "Validate Payment Input: Validate payment amount, currency, and method format.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_validate_card",
+    "content": "Validate Card Details: Check card number (Luhn), expiry date, and CVV format.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_check_balance",
+    "content": "Check Account Balance: Verify sufficient funds in customer account.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_fraud_check",
+    "content": "Fraud Detection Check: Evaluate transaction risk score against fraud rules.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_manual_review",
+    "content": "Manual Fraud Review: Human analyst reviews flagged transaction.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_bank_authorization",
+    "content": "Bank Authorization: Submit to issuing bank for authorization.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_apply_discount",
+    "content": "Apply Discount / Coupon: Apply promotional discount codes to the transaction.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_process_settlement",
+    "content": "Process Settlement: Execute fund transfer between accounts.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_generate_receipt",
+    "content": "Generate Receipt: Create transaction receipt with details.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_send_notification",
+    "content": "Send Notification: Notify customer via email/SMS of transaction result.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transaction_complete",
+    "content": "Transaction Complete: Payment successfully processed and settled.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transaction_failed",
+    "content": "Transaction Failed: Payment could not be completed.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_retry_payment",
+    "content": "Retry Payment: Attempt payment again after transient failure.",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_0",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_1",
+    "content": "Transition: ? \u2192 ? [input_valid]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_2",
+    "content": "Transition: ? \u2192 ? [input_invalid]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_3",
+    "content": "Transition: ? \u2192 ? [card_valid]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_4",
+    "content": "Transition: ? \u2192 ? [card_invalid]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_5",
+    "content": "Transition: ? \u2192 ? [balance_sufficient]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_6",
+    "content": "Transition: ? \u2192 ? [balance_insufficient]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_7",
+    "content": "Transition: ? \u2192 ? [passed]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_8",
+    "content": "Transition: ? \u2192 ? [flagged]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_9",
+    "content": "Transition: ? \u2192 ? [blocked]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_10",
+    "content": "Transition: ? \u2192 ? [review_approved]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_11",
+    "content": "Transition: ? \u2192 ? [review_rejected]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_12",
+    "content": "Transition: ? \u2192 ? [approved]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_13",
+    "content": "Transition: ? \u2192 ? [declined]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_14",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_15",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_16",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_17",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_18",
+    "content": "Transition: ? \u2192 ? [retry_allowed]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "online_payment_transition_19",
+    "content": "Transition: ? \u2192 ? [max_retries_exceeded]",
+    "domain": "online_payment"
+  },
+  {
+    "id": "order_fulfillment_description",
+    "content": "order_fulfillment: End-to-end order processing from placement through inventory check, packaging, shipping, and delivery confirmation.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_order_placed",
+    "content": "Order Placed: Customer places an order in the system.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_validate_order",
+    "content": "Validate Order Details: Verify order items, quantities, pricing, and shipping address.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_check_inventory",
+    "content": "Check Inventory Availability: Verify all items are in stock at the fulfillment center.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_reserve_inventory",
+    "content": "Reserve Inventory: Lock inventory items for this order.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_process_payment",
+    "content": "Process Payment: Charge customer payment method.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_pick_items",
+    "content": "Pick Items from Warehouse: Warehouse staff picks ordered items.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_quality_check",
+    "content": "Quality Inspection: Inspect picked items for damage or defects.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_pack_items",
+    "content": "Pack Items: Package items securely for shipping.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_generate_label",
+    "content": "Generate Shipping Label: Create shipping label with tracking number.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_dispatch_shipment",
+    "content": "Dispatch Shipment: Hand off package to shipping carrier.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_track_shipment",
+    "content": "Track Shipment: Monitor package through carrier tracking system.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_delivery_attempt",
+    "content": "Delivery Attempt: Carrier attempts delivery to customer.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_send_confirmation",
+    "content": "Send Delivery Confirmation: Notify customer of successful delivery.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_order_delivered",
+    "content": "Order Delivered: Order successfully delivered to customer.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_order_cancelled",
+    "content": "Order Cancelled: Order has been cancelled.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_notify_backorder",
+    "content": "Notify Backorder: Inform customer of backordered items.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_retry_delivery",
+    "content": "Retry Delivery: Schedule re-delivery attempt.",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_0",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_1",
+    "content": "Transition: ? \u2192 ? [order_valid]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_2",
+    "content": "Transition: ? \u2192 ? [order_invalid]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_3",
+    "content": "Transition: ? \u2192 ? [in_stock]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_4",
+    "content": "Transition: ? \u2192 ? [partial_stock]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_5",
+    "content": "Transition: ? \u2192 ? [out_of_stock]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_6",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_7",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_8",
+    "content": "Transition: ? \u2192 ? [payment_success]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_9",
+    "content": "Transition: ? \u2192 ? [payment_failed]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_10",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_11",
+    "content": "Transition: ? \u2192 ? [passed]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_12",
+    "content": "Transition: ? \u2192 ? [failed]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_13",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_14",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_15",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_16",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_17",
+    "content": "Transition: ? \u2192 ? [delivered]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_18",
+    "content": "Transition: ? \u2192 ? [failed_attempt]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_19",
+    "content": "Transition: ? \u2192 ? [retry_allowed]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_20",
+    "content": "Transition: ? \u2192 ? [max_retries_exceeded]",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "order_fulfillment_transition_21",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "order_fulfillment"
+  },
+  {
+    "id": "user_registration_description",
+    "content": "user_registration: User sign-up flow including input validation, verification, profile creation, and welcome onboarding.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_start_registration",
+    "content": "User Opens Registration: User navigates to registration page.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_collect_info",
+    "content": "Collect User Information: Gather name, email, password, and optional fields.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_validate_input",
+    "content": "Validate Input Fields: Check email format, password strength, required fields.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_check_duplicate",
+    "content": "Check Duplicate Account: Verify email/username is not already registered.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_send_verification",
+    "content": "Send Verification Email/OTP: Send verification code via email or SMS.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_verify_identity",
+    "content": "Verify User Identity: User submits verification code for validation.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_create_profile",
+    "content": "Create User Profile: Persist user data and create account in database.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_assign_role",
+    "content": "Assign Default Role: Assign default role and permissions to new user.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_setup_preferences",
+    "content": "Setup User Preferences: Configure notification and display preferences.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_send_welcome",
+    "content": "Send Welcome Communication: Send welcome email with getting-started guide.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_registration_complete",
+    "content": "Registration Complete: User account created and ready to use.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_registration_failed",
+    "content": "Registration Failed: Registration could not be completed.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_retry_verification",
+    "content": "Retry Verification: Resend verification code for another attempt.",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_0",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_1",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_2",
+    "content": "Transition: ? \u2192 ? [valid]",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_3",
+    "content": "Transition: ? \u2192 ? [invalid]",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_4",
+    "content": "Transition: ? \u2192 ? [unique]",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_5",
+    "content": "Transition: ? \u2192 ? [duplicate]",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_6",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_7",
+    "content": "Transition: ? \u2192 ? [verified]",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_8",
+    "content": "Transition: ? \u2192 ? [failed]",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_9",
+    "content": "Transition: ? \u2192 ? [retry_allowed]",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_10",
+    "content": "Transition: ? \u2192 ? [max_retries_exceeded]",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_11",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_12",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_13",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "user_registration"
+  },
+  {
+    "id": "user_registration_transition_14",
+    "content": "Transition: ? \u2192 ?",
+    "domain": "user_registration"
+  }
+]

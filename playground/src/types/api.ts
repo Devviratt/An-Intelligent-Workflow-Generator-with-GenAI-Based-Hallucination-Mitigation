@@ -163,3 +163,22 @@ export interface ApiError {
   message: string;
   details: unknown;
 }
+
+// ── RAG ──
+
+export interface RetrievedChunk {
+  id: string;
+  content: string;
+  domain: string;
+}
+
+export interface ProcessQueryRequest {
+  query: string;
+  top_k: number;
+}
+
+export interface ProcessQueryResponse {
+  user_query: string;
+  embedding_preview: number[];
+  retrieved_chunks: RetrievedChunk[];
+}

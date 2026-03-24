@@ -1,40 +1,41 @@
 """
-Pipeline Orchestrator — async pipeline connecting all engine stages.
+Pipeline orchestrator connecting all engine stages.
 
-Pipeline: Parse → Generate → Mitigate → Validate → Layout → (Optional Model) → Output
+Pipeline:
+  Parse -> Generate -> Mitigate -> Validate -> Layout -> Optional Model -> Output
 
 Supports two modes:
-  - workflow   → WorkflowGenerator  + standard mitigation/validation
-  - flowchart  → FlowchartGenerator + strict mitigation/validation
+  - workflow
+  - flowchart
 
-All stages are independent and communicate only through typed models.
-Timing is captured for every stage.
+Deterministic dataset-based generators are used by default for speed. If a
+request explicitly opts into LLM generation, Ollama is attempted first and the
+pipeline falls back to deterministic generation if Ollama fails.
 """
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
-from typing import Any
 
 from src.config import settings
 from src.engines.domain_engine import DomainDatasetEngine
-from src.engines.flowchart_generator import FlowchartGenerator, FlowchartGenerationError
+from src.engines.flowchart_generator import FlowchartGenerationError, FlowchartGenerator
 from src.engines.hallucination_mitigation import HallucinationMitigator
+from src.engines.input_adapter import InputAdapter
 from src.engines.instruction_parser import InstructionParser
 from src.engines.layout_engine import LayoutEngine
 from src.engines.llm_flowchart_generator import (
-    LLMFlowchartGenerator,
     LLMFlowchartGenerationError,
+    LLMFlowchartGenerator,
 )
 from src.engines.llm_workflow_generator import (
-    LLMWorkflowGenerator,
     LLMWorkflowGenerationError,
+    LLMWorkflowGenerator,
 )
 from src.engines.local_model import LocalModelIntegration
 from src.engines.validation_engine import ValidationEngine
-from src.engines.workflow_generator import WorkflowGenerator, WorkflowGenerationError
+from src.engines.workflow_generator import WorkflowGenerationError, WorkflowGenerator
 from src.models.request import (
     ErrorDetail,
     GenerateRequest,
@@ -67,25 +68,19 @@ class Pipeline:
     def __init__(self) -> None:
         self._dataset_engine = DomainDatasetEngine()
         self._parser = InstructionParser()
-        # LLM-based generators (primary)
+        self._input_adapter = InputAdapter()
         self._llm_generator = LLMWorkflowGenerator()
         self._llm_flowchart_generator = LLMFlowchartGenerator()
-        # Legacy deterministic generators (fallback)
         self._generator = WorkflowGenerator()
         self._flowchart_generator = FlowchartGenerator()
         self._mitigator = HallucinationMitigator()
         self._validator = ValidationEngine()
         self._layout = LayoutEngine()
         self._local_model = LocalModelIntegration()
-        # Observability (passive — no core logic changes)
         self._hallucination_collector = HallucinationMetricsCollector()
         self._explainability = ExplainabilityEngine()
         self._evaluation_runner = EvaluationRunner()
         self._initialised = False
-
-    # ------------------------------------------------------------------
-    # Initialisation
-    # ------------------------------------------------------------------
 
     async def initialise(self) -> None:
         """Load datasets and fit the parser."""
@@ -102,36 +97,33 @@ class Pipeline:
         if not self._initialised:
             raise RuntimeError("Pipeline.initialise() must be called first")
 
-    # ------------------------------------------------------------------
-    # Properties
-    # ------------------------------------------------------------------
-
     @property
     def dataset_engine(self) -> DomainDatasetEngine:
         return self._dataset_engine
 
-    # ------------------------------------------------------------------
-    # Generate
-    # ------------------------------------------------------------------
-
     async def generate(self, request: GenerateRequest) -> GenerateResponse:
-        """Execute the full generation pipeline (workflow or flowchart)."""
+        """Execute the full generation pipeline."""
         self._ensure_initialised()
         metrics = PipelineMetrics()
-        errors: list[ErrorDetail] = []
         total_start = time.perf_counter()
         profiler = StageProfiler()
         profiler.start_total()
 
         try:
-            # ── Stage 1: Parse instruction ──
+            adapted = self._input_adapter.adapt(request.instruction)
+
             with profiler.stage(StageName.PARSE, input_count=1):
-                parsed = self._parser.parse(request.instruction)
+                parsed = self._parser.parse(adapted.normalized_instruction)
+                parsed = parsed.model_copy(
+                    update={
+                        "original_text": request.instruction,
+                        "custom_steps_requested": adapted.step_hints,
+                    }
+                )
             metrics.parse_time_ms = profiler.get(StageName.PARSE).duration_ms
             profiler.set_output_count(StageName.PARSE, 1)
 
-            # Resolve domain
-            domain = request.domain_hint or parsed.selected_domain
+            domain = request.domain_hint or adapted.domain_hint or parsed.selected_domain
             if not domain:
                 return GenerateResponse(
                     success=False,
@@ -165,59 +157,116 @@ class Pipeline:
                 parsed.best_match.confidence if parsed.best_match else 0.0
             )
 
-            is_flowchart = request.mode == GenerationMode.FLOWCHART
+            request_mode = adapted.mode_hint or request.mode
+            is_flowchart = request_mode == GenerationMode.FLOWCHART
+            generation_engine = "deterministic"
+            fallback_reason: str | None = None
+            resolved_custom_steps = self._input_adapter.resolve_custom_steps(
+                dataset,
+                adapted.step_hints,
+                request.custom_steps,
+            )
 
-            # ── Stage 2: Generate structure (LLM-based) ──
             with profiler.stage(
                 StageName.GENERATE,
                 input_count=len(dataset.steps),
-                metadata={"mode": request.mode.value, "engine": "llm"},
+                metadata={"mode": request_mode.value, "engine": generation_engine},
             ):
-                try:
-                    if is_flowchart:
-                        workflow = await self._llm_flowchart_generator.generate(
-                            dataset=dataset,
-                            parsed=parsed,
-                            include_optional=request.include_optional_steps,
-                        )
-                    else:
-                        workflow = await self._llm_generator.generate(
-                            dataset=dataset,
-                            parsed=parsed,
-                            include_optional=request.include_optional_steps,
-                        )
-                except (LLMWorkflowGenerationError, LLMFlowchartGenerationError) as exc:
-                    logger.error("LLM generation failed: %s", exc)
-                    return GenerateResponse(
-                        success=False,
-                        errors=[
-                            ErrorDetail(
-                                code="LLM_GENERATION_ERROR",
-                                message=str(exc),
-                            )
-                        ],
-                        metrics=metrics,
+                if request.prefer_llm_generation:
+                    generation_engine = "llm"
+                    profiler.add_stage_metadata(
+                        StageName.GENERATE, "engine", generation_engine
                     )
+                    try:
+                        if is_flowchart:
+                            workflow = await self._llm_flowchart_generator.generate(
+                                dataset=dataset,
+                                parsed=parsed,
+                                include_optional=request.include_optional_steps,
+                            )
+                        else:
+                            workflow = await self._llm_generator.generate(
+                                dataset=dataset,
+                                parsed=parsed,
+                                include_optional=request.include_optional_steps,
+                            )
+                    except (LLMWorkflowGenerationError, LLMFlowchartGenerationError) as exc:
+                        fallback_reason = str(exc)
+                        generation_engine = "deterministic_fallback"
+                        profiler.add_stage_metadata(
+                            StageName.GENERATE, "engine", generation_engine
+                        )
+                        profiler.add_stage_metadata(
+                            StageName.GENERATE, "fallback_reason", fallback_reason
+                        )
+                        logger.warning(
+                            "LLM generation failed, using deterministic fallback: %s",
+                            exc,
+                        )
+                        if is_flowchart:
+                            workflow = self._flowchart_generator.generate(
+                                dataset=dataset,
+                                parsed=parsed,
+                                include_optional=request.include_optional_steps,
+                            )
+                        else:
+                            workflow = self._generator.generate(
+                                dataset=dataset,
+                                parsed=parsed,
+                                include_optional=request.include_optional_steps,
+                                custom_steps=resolved_custom_steps,
+                            )
+                elif is_flowchart:
+                    workflow = self._flowchart_generator.generate(
+                        dataset=dataset,
+                        parsed=parsed,
+                        include_optional=request.include_optional_steps,
+                    )
+                else:
+                    workflow = self._generator.generate(
+                        dataset=dataset,
+                        parsed=parsed,
+                        include_optional=request.include_optional_steps,
+                        custom_steps=resolved_custom_steps,
+                    )
+
             metrics.generation_time_ms = profiler.get(StageName.GENERATE).duration_ms
             profiler.set_output_count(StageName.GENERATE, len(workflow.nodes))
 
-            # Snapshot pre-mitigation counts (for metrics, skipping actual mitigation)
             pre_mitigation_nodes = len(workflow.nodes)
             pre_mitigation_edges = len(workflow.edges)
 
-            # ── Stage 3: Hallucination mitigation (SKIPPED - trust LLM output) ──
-            mitigation_result = ValidationResult(checks_performed=["skipped_llm"])
-            # No mitigation step since user wants direct LLM output
-            metrics.mitigation_time_ms = 0.0
+            if generation_engine in {"deterministic", "deterministic_fallback"}:
+                with profiler.stage(StageName.MITIGATE, input_count=len(workflow.nodes)):
+                    if is_flowchart:
+                        workflow, mitigation_result = self._mitigator.mitigate_flowchart(
+                            workflow, dataset
+                        )
+                    else:
+                        workflow, mitigation_result = self._mitigator.mitigate(
+                            workflow, dataset
+                        )
+                metrics.mitigation_time_ms = profiler.get(StageName.MITIGATE).duration_ms
+                profiler.set_output_count(StageName.MITIGATE, len(workflow.nodes))
 
-            # ── Stage 4: Validation (SKIPPED - trust LLM output) ──
-            validation_result = ValidationResult(
-                checks_performed=["skipped_llm"],
-                is_valid=True,
-            )
-            metrics.validation_time_ms = 0.0
+                with profiler.stage(StageName.VALIDATE, input_count=len(workflow.nodes)):
+                    if is_flowchart:
+                        validation_result = self._validator.validate_flowchart(
+                            workflow, dataset
+                        )
+                    else:
+                        validation_result = self._validator.validate(workflow, dataset)
+                metrics.validation_time_ms = profiler.get(StageName.VALIDATE).duration_ms
+                profiler.set_output_count(StageName.VALIDATE, len(workflow.nodes))
+            else:
+                mitigation_result = ValidationResult(checks_performed=["skipped_llm"])
+                validation_result = ValidationResult(
+                    checks_performed=["skipped_llm"],
+                    is_valid=True,
+                )
+                metrics.mitigation_time_ms = 0.0
+                metrics.validation_time_ms = 0.0
 
-            # ── Stage 5: Layout ──
             with profiler.stage(StageName.LAYOUT, input_count=len(workflow.nodes)):
                 if is_flowchart:
                     workflow = self._layout.compute_flowchart_layout(workflow)
@@ -226,22 +275,19 @@ class Pipeline:
             metrics.layout_time_ms = profiler.get(StageName.LAYOUT).duration_ms
             profiler.set_output_count(StageName.LAYOUT, len(workflow.nodes))
 
-            # ── Stage 6: Optional local model refinement ──
             if request.use_local_model and settings.use_local_model:
                 try:
                     with profiler.stage(StageName.LOCAL_MODEL):
                         workflow = await self._local_model.refine_descriptions(
                             workflow, dataset
                         )
-                except Exception as exc:
+                except Exception as exc:  # pragma: no cover - best effort
                     logger.warning("Local model refinement skipped: %s", exc)
 
-            # ── Stage 7: Explainability annotation (passive) ──
             with profiler.stage(StageName.EXPLAINABILITY, input_count=len(workflow.nodes)):
                 workflow = self._explainability.annotate_nodes(workflow, dataset)
             profiler.set_output_count(StageName.EXPLAINABILITY, len(workflow.nodes))
 
-            # ── Finalise ──
             profiler.end_total()
             metrics.nodes_generated = len(workflow.nodes)
             metrics.edges_generated = len(workflow.edges)
@@ -249,27 +295,30 @@ class Pipeline:
                 (time.perf_counter() - total_start) * 1000, 2
             )
 
-            # ── Observability post-processing ──
+            workflow.metadata["generation_engine"] = generation_engine
+            workflow.metadata["input_format"] = adapted.detected_format
+            workflow.metadata["adapted_instruction"] = adapted.normalized_instruction
+            workflow.metadata["resolved_custom_steps"] = resolved_custom_steps
+            if adapted.domain_hint:
+                workflow.metadata["input_domain_hint"] = adapted.domain_hint
+            if fallback_reason:
+                workflow.metadata["fallback_reason"] = fallback_reason
+
             observability: ObservabilityResult | None = None
             if request.evaluation_mode:
-                # Collect hallucination metrics
                 h_metrics = self._hallucination_collector.collect(
                     mitigation_result=mitigation_result,
                     workflow_before_nodes=pre_mitigation_nodes,
                     workflow_before_edges=pre_mitigation_edges,
                     workflow_after=workflow,
                 )
-
-                # Build explainability entry
                 explain_entry = self._explainability.build(
-                    workflow, dataset, parsed,
-                    mode=request.mode.value,
+                    workflow,
+                    dataset,
+                    parsed,
+                    mode=request_mode.value,
                 )
-
-                # Collect stage metrics
                 stage_metrics = profiler.collect()
-
-                # Build evaluation report
                 eval_report = self._evaluation_runner.build_report(
                     success=validation_result.is_valid,
                     workflow=workflow,
@@ -279,9 +328,8 @@ class Pipeline:
                     hallucination_metrics=h_metrics,
                     explainability=explain_entry,
                     request_instruction=request.instruction,
-                    request_mode=request.mode.value,
+                    request_mode=request_mode.value,
                 )
-
                 observability = ObservabilityResult(
                     stage_metrics=stage_metrics,
                     hallucination_metrics=h_metrics,
@@ -295,9 +343,9 @@ class Pipeline:
                 validation=validation_result,
                 metrics=metrics,
                 errors=[
-                    ErrorDetail(code="VALIDATION_ERROR", message=i.message)
-                    for i in validation_result.issues
-                    if i.severity.value == "error"
+                    ErrorDetail(code="VALIDATION_ERROR", message=issue.message)
+                    for issue in validation_result.issues
+                    if issue.severity.value == "error"
                 ],
                 observability=observability,
             )
@@ -309,12 +357,10 @@ class Pipeline:
             )
             return GenerateResponse(
                 success=False,
-                errors=[
-                    ErrorDetail(code="GENERATION_ERROR", message=str(exc))
-                ],
+                errors=[ErrorDetail(code="GENERATION_ERROR", message=str(exc))],
                 metrics=metrics,
             )
-        except Exception as exc:
+        except Exception as exc:  # pragma: no cover - defensive
             logger.exception("Unexpected pipeline error")
             profiler.end_total()
             metrics.total_time_ms = round(
@@ -322,15 +368,9 @@ class Pipeline:
             )
             return GenerateResponse(
                 success=False,
-                errors=[
-                    ErrorDetail(code="INTERNAL_ERROR", message=str(exc))
-                ],
+                errors=[ErrorDetail(code="INTERNAL_ERROR", message=str(exc))],
                 metrics=metrics,
             )
-
-    # ------------------------------------------------------------------
-    # Validate (existing workflow)
-    # ------------------------------------------------------------------
 
     async def validate(self, request: ValidateRequest) -> ValidateResponse:
         """Validate an existing workflow without generating."""
@@ -345,17 +385,15 @@ class Pipeline:
         result = self._validator.validate(request.workflow, dataset)
 
         if dataset:
-            _, mitigation_result = self._mitigator.mitigate(
-                request.workflow, dataset
-            )
+            _, mitigation_result = self._mitigator.mitigate(request.workflow, dataset)
             result.merge(mitigation_result)
 
         return ValidateResponse(
             success=result.is_valid,
             validation=result,
             errors=[
-                ErrorDetail(code="VALIDATION_ERROR", message=i.message)
-                for i in result.issues
-                if i.severity.value == "error"
+                ErrorDetail(code="VALIDATION_ERROR", message=issue.message)
+                for issue in result.issues
+                if issue.severity.value == "error"
             ],
         )

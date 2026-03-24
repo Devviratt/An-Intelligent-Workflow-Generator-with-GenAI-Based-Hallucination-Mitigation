@@ -1,0 +1,262 @@
+{
+  "domain": "loan_approval",
+  "display_name": "Loan Approval Workflow",
+  "description": "Loan origination workflow covering application intake, document verification, risk checks, underwriting, approval, and disbursement.",
+  "version": "1.0.0",
+  "keywords": [
+    "loan", "lending", "approval", "underwriting", "credit", "score",
+    "borrower", "application", "income", "debt", "kyc", "verification",
+    "risk", "sanction", "disbursement", "emi", "banking", "finance",
+    "mortgage", "personal loan", "eligibility", "document review"
+  ],
+  "start_node": "loan_application_received",
+  "end_node": "loan_disbursed",
+  "error_terminal": "application_rejected",
+  "metadata": {
+    "avg_steps": 11,
+    "sla_seconds": 172800,
+    "compliance": ["KYC", "AML"],
+    "criticality": "high"
+  },
+  "steps": [
+    {
+      "id": "loan_application_received",
+      "label": "Loan Application Received",
+      "type": "start",
+      "description": "Applicant submits loan request with profile and requested amount.",
+      "required": true
+    },
+    {
+      "id": "capture_application",
+      "label": "Capture Application Details",
+      "type": "process",
+      "description": "Register applicant details, loan type, and requested tenure.",
+      "required": true
+    },
+    {
+      "id": "document_check",
+      "label": "Verify Submitted Documents",
+      "type": "decision",
+      "description": "Validate identity, address, income, and bank documents.",
+      "branches": {
+        "documents_complete": "All required documents are present and valid.",
+        "documents_missing": "Mandatory documents are missing or invalid."
+      },
+      "required": true
+    },
+    {
+      "id": "request_additional_documents",
+      "label": "Request Additional Documents",
+      "type": "process",
+      "description": "Ask applicant to re-submit or complete missing documentation.",
+      "required": false
+    },
+    {
+      "id": "kyc_aml_screening",
+      "label": "Run KYC / AML Screening",
+      "type": "decision",
+      "description": "Perform identity verification and sanctions screening.",
+      "branches": {
+        "screening_passed": "Applicant passes KYC and AML screening.",
+        "screening_failed": "Applicant fails compliance screening."
+      },
+      "required": true
+    },
+    {
+      "id": "credit_assessment",
+      "label": "Assess Creditworthiness",
+      "type": "decision",
+      "description": "Evaluate credit score, repayment history, and exposure.",
+      "branches": {
+        "credit_eligible": "Credit profile meets policy requirements.",
+        "credit_borderline": "Needs manual underwriter review.",
+        "credit_ineligible": "Credit risk exceeds acceptable threshold."
+      },
+      "required": true
+    },
+    {
+      "id": "underwriter_review",
+      "label": "Manual Underwriter Review",
+      "type": "decision",
+      "description": "Underwriter reviews borderline applications and supporting evidence.",
+      "branches": {
+        "review_approved": "Underwriter approves the application.",
+        "review_rejected": "Underwriter rejects the application.",
+        "needs_clarification": "More clarification is needed from the applicant."
+      },
+      "required": false
+    },
+    {
+      "id": "income_ratio_check",
+      "label": "Debt-to-Income Check",
+      "type": "decision",
+      "description": "Verify affordability using income, obligations, and requested EMI.",
+      "branches": {
+        "affordable": "Debt-to-income ratio is within policy limits.",
+        "not_affordable": "Affordability check fails."
+      },
+      "required": true
+    },
+    {
+      "id": "approval_committee",
+      "label": "Approval Committee Decision",
+      "type": "decision",
+      "description": "Final sanction decision by credit committee or system policy.",
+      "branches": {
+        "approved": "Loan is sanctioned for disbursement.",
+        "rejected": "Application is declined at final approval.",
+        "conditional_approval": "Approved subject to additional conditions."
+      },
+      "required": true
+    },
+    {
+      "id": "send_sanction_letter",
+      "label": "Send Sanction Letter",
+      "type": "process",
+      "description": "Issue sanction terms and repayment schedule to the applicant.",
+      "required": true
+    },
+    {
+      "id": "collect_acceptance",
+      "label": "Collect Applicant Acceptance",
+      "type": "decision",
+      "description": "Confirm applicant acceptance of sanctioned terms and conditions.",
+      "branches": {
+        "accepted": "Applicant accepts the sanction terms.",
+        "declined": "Applicant declines or does not respond."
+      },
+      "required": true
+    },
+    {
+      "id": "disburse_funds",
+      "label": "Disburse Loan Funds",
+      "type": "process",
+      "description": "Release approved loan amount to the applicant account.",
+      "required": true
+    },
+    {
+      "id": "notify_customer",
+      "label": "Notify Customer",
+      "type": "process",
+      "description": "Send approval, rejection, or disbursement updates to the applicant.",
+      "required": false
+    },
+    {
+      "id": "loan_disbursed",
+      "label": "Loan Disbursed",
+      "type": "end",
+      "description": "Loan processing is complete and funds are disbursed.",
+      "required": true
+    },
+    {
+      "id": "application_rejected",
+      "label": "Application Rejected",
+      "type": "end",
+      "description": "Loan application is declined or terminated.",
+      "required": false
+    },
+    {
+      "id": "retry_document_collection",
+      "label": "Retry Document Collection",
+      "type": "process",
+      "description": "Retry document collection after incomplete or invalid submission.",
+      "required": false,
+      "retry_config": {
+        "max_attempts": 2,
+        "backoff_seconds": [86400, 172800],
+        "retry_on": ["documents_missing", "clarification_needed"]
+      }
+    }
+  ],
+  "transitions": [
+    {"from": "loan_application_received", "to": "capture_application", "condition": null},
+    {"from": "capture_application", "to": "document_check", "condition": null},
+    {"from": "document_check", "to": "kyc_aml_screening", "condition": "documents_complete"},
+    {"from": "document_check", "to": "request_additional_documents", "condition": "documents_missing"},
+    {"from": "request_additional_documents", "to": "retry_document_collection", "condition": null},
+    {"from": "retry_document_collection", "to": "document_check", "condition": "retry_allowed"},
+    {"from": "retry_document_collection", "to": "application_rejected", "condition": "max_retries_exceeded"},
+    {"from": "kyc_aml_screening", "to": "credit_assessment", "condition": "screening_passed"},
+    {"from": "kyc_aml_screening", "to": "application_rejected", "condition": "screening_failed"},
+    {"from": "credit_assessment", "to": "income_ratio_check", "condition": "credit_eligible"},
+    {"from": "credit_assessment", "to": "underwriter_review", "condition": "credit_borderline"},
+    {"from": "credit_assessment", "to": "application_rejected", "condition": "credit_ineligible"},
+    {"from": "underwriter_review", "to": "income_ratio_check", "condition": "review_approved"},
+    {"from": "underwriter_review", "to": "retry_document_collection", "condition": "needs_clarification"},
+    {"from": "underwriter_review", "to": "application_rejected", "condition": "review_rejected"},
+    {"from": "income_ratio_check", "to": "approval_committee", "condition": "affordable"},
+    {"from": "income_ratio_check", "to": "application_rejected", "condition": "not_affordable"},
+    {"from": "approval_committee", "to": "send_sanction_letter", "condition": "approved"},
+    {"from": "approval_committee", "to": "send_sanction_letter", "condition": "conditional_approval"},
+    {"from": "approval_committee", "to": "application_rejected", "condition": "rejected"},
+    {"from": "send_sanction_letter", "to": "collect_acceptance", "condition": null},
+    {"from": "collect_acceptance", "to": "disburse_funds", "condition": "accepted"},
+    {"from": "collect_acceptance", "to": "application_rejected", "condition": "declined"},
+    {"from": "disburse_funds", "to": "notify_customer", "condition": null},
+    {"from": "notify_customer", "to": "loan_disbursed", "condition": null}
+  ],
+  "validation_rules": {
+    "max_depth": 16,
+    "max_retries": 2,
+    "required_steps": ["loan_application_received", "capture_application", "document_check", "kyc_aml_screening", "credit_assessment", "income_ratio_check", "approval_committee", "collect_acceptance", "loan_disbursed"],
+    "forbidden_direct_transitions": [
+      {"from": "loan_application_received", "to": "disburse_funds"},
+      {"from": "capture_application", "to": "loan_disbursed"}
+    ]
+  },
+  "end_nodes": ["loan_disbursed", "application_rejected"],
+  "decision_rules": {
+    "document_check": {
+      "branches": [
+        {"label": "documents_complete", "target": "kyc_aml_screening"},
+        {"label": "documents_missing", "target": "request_additional_documents"}
+      ]
+    },
+    "kyc_aml_screening": {
+      "branches": [
+        {"label": "screening_passed", "target": "credit_assessment"},
+        {"label": "screening_failed", "target": "application_rejected"}
+      ]
+    },
+    "credit_assessment": {
+      "branches": [
+        {"label": "credit_eligible", "target": "income_ratio_check"},
+        {"label": "credit_borderline", "target": "underwriter_review"},
+        {"label": "credit_ineligible", "target": "application_rejected"}
+      ]
+    },
+    "underwriter_review": {
+      "branches": [
+        {"label": "review_approved", "target": "income_ratio_check"},
+        {"label": "needs_clarification", "target": "retry_document_collection"},
+        {"label": "review_rejected", "target": "application_rejected"}
+      ]
+    },
+    "income_ratio_check": {
+      "branches": [
+        {"label": "affordable", "target": "approval_committee"},
+        {"label": "not_affordable", "target": "application_rejected"}
+      ]
+    },
+    "approval_committee": {
+      "branches": [
+        {"label": "approved", "target": "send_sanction_letter"},
+        {"label": "conditional_approval", "target": "send_sanction_letter"},
+        {"label": "rejected", "target": "application_rejected"}
+      ]
+    },
+    "collect_acceptance": {
+      "branches": [
+        {"label": "accepted", "target": "disburse_funds"},
+        {"label": "declined", "target": "application_rejected"}
+      ]
+    }
+  },
+  "flowchart_retry_constraints": [
+    {
+      "node": "retry_document_collection",
+      "max_attempts": 2,
+      "loop_back_to": "document_check"
+    }
+  ]
+}

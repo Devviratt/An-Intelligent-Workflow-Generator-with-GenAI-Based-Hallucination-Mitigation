@@ -1,14 +1,6 @@
-/* ================================================================
-   App — root layout component.
-
-   Two-panel layout:
-     Left  → ControlPanel  (instruction, mode, domain, generate)
-     Right → OutputWorkspace (diagram, JSON, validation tabs)
-   ================================================================ */
-
-import { useWorkflowGenerator } from "@/hooks";
 import { ControlPanel } from "@/components/ControlPanel";
 import { OutputWorkspace } from "@/components/OutputWorkspace";
+import { useWorkflowGenerator } from "@/hooks";
 import styles from "./App.module.css";
 
 export default function App() {
@@ -19,24 +11,31 @@ export default function App() {
     domains,
     generate,
     cancel,
+    reset,
   } = useWorkflowGenerator();
 
   return (
     <div className={styles.layout}>
-      {/* Header */}
       <header className={styles.header}>
-        <div className={styles.brand}>
-          <span className={styles.logo}>◇</span>
-          <h1 className={styles.title}>Workflow Playground</h1>
-          <span className={styles.version}>v1</span>
+        <div className={styles.brandBlock}>
+          <div className={styles.brand}>
+            <span className={styles.logo}>WF</span>
+            <div>
+              <h1 className={styles.title}>Intelligent Workflow Generator</h1>
+              <p className={styles.subtitle}>Visual Workflow Engine</p>
+            </div>
+          </div>
+          <p className={styles.tagline}>
+            Turn natural-language instructions into a structured workflow graph
+            with branching logic, validation details, and export-ready visuals.
+          </p>
         </div>
-        <p className={styles.subtitle}>
-          AI-powered workflow &amp; flowchart generation with hallucination
-          mitigation
-        </p>
+
+        <div className={styles.statusPill} data-state={status}>
+          {status === "loading" ? "Generating..." : "Backend Ready"}
+        </div>
       </header>
 
-      {/* Main content */}
       <main className={styles.main}>
         <aside className={styles.sidebar}>
           <ControlPanel
@@ -45,11 +44,16 @@ export default function App() {
             error={error}
             onGenerate={generate}
             onCancel={cancel}
+            onReset={reset}
           />
         </aside>
 
         <section className={styles.workspace}>
-          <OutputWorkspace response={response} />
+          <OutputWorkspace
+            response={response}
+            status={status}
+            error={error}
+          />
         </section>
       </main>
     </div>

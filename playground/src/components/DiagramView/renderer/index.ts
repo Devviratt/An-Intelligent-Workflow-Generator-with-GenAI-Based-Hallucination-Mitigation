@@ -8,6 +8,7 @@ export type { RoutedEdge, RoutePoint } from "./edgeRouter";
 
 export {
   getNodeStyle,
+  getInvalidNodeStyle,
   getShadowParams,
   EDGE_STYLES,
   LABEL_STYLE,

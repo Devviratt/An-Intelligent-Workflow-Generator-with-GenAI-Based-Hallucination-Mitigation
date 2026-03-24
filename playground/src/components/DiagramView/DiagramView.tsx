@@ -30,6 +30,7 @@ import {
   computeLayout,
   routeEdges,
   getNodeStyle,
+  getInvalidNodeStyle,
   getShadowParams,
   EDGE_STYLES,
   LABEL_STYLE,
@@ -64,6 +65,7 @@ const SvgNode = memo(function SvgNode({
   node,
   index,
   isRetryTarget,
+  isInvalid,
   isHovered,
   isSelected,
   onHover,
@@ -72,12 +74,15 @@ const SvgNode = memo(function SvgNode({
   node: LayoutNode;
   index: number;
   isRetryTarget: boolean;
+  isInvalid: boolean;
   isHovered: boolean;
   isSelected: boolean;
   onHover: (id: string | null) => void;
   onClick: (id: string) => void;
 }) {
-  const style = getNodeStyle(node.type, isRetryTarget);
+  const style = isInvalid
+    ? getInvalidNodeStyle(getNodeStyle(node.type, isRetryTarget))
+    : getNodeStyle(node.type, isRetryTarget);
   const shadow = getShadowParams(node.depth);
   const { x, y, width, height } = node;
   const cx = x + width / 2;
@@ -303,10 +308,12 @@ function Legend() {
 
 interface DiagramViewProps {
   workflow: GeneratedWorkflow | null;
+  invalidNodeIds?: Set<string>;
 }
 
 export const DiagramView = memo(function DiagramView({
   workflow,
+  invalidNodeIds = new Set(),
 }: DiagramViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgGroupRef = useRef<SVGGElement>(null);
@@ -489,6 +496,20 @@ export const DiagramView = memo(function DiagramView({
     }
   }, []);
 
+  const handleExportSvg = useCallback(() => {
+    const svg = containerRef.current?.querySelector("svg");
+    if (!svg) return;
+
+    const serialized = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([serialized], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${workflow?.domain ?? "workflow"}-graph.svg`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }, [workflow?.domain]);
+
   /* ── Keyboard shortcuts ── */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -602,6 +623,16 @@ export const DiagramView = memo(function DiagramView({
             </svg>
           )}
         </button>
+        <button
+          className={styles.toolBtn}
+          onClick={handleExportSvg}
+          title="Export as SVG"
+          type="button"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 2v6M4.5 5.5L7 8l2.5-2.5M2 10.5v1h10v-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
       </div>
 
       {/* SVG Canvas */}
@@ -661,6 +692,7 @@ export const DiagramView = memo(function DiagramView({
               node={node}
               index={i}
               isRetryTarget={retryTargets.has(node.id)}
+              isInvalid={invalidNodeIds.has(node.id)}
               isHovered={hoveredNode === node.id}
               isSelected={selectedNode === node.id}
               onHover={handleNodeHover}

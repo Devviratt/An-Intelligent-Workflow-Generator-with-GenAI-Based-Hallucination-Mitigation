@@ -1,0 +1,264 @@
+{
+  "domain": "insurance_claim_processing",
+  "display_name": "Insurance Claim Processing",
+  "description": "Insurance claim workflow covering claim intake, policy validation, assessment, fraud review, approval, and settlement.",
+  "version": "1.0.0",
+  "keywords": [
+    "insurance", "claim", "claims", "policy", "settlement", "coverage",
+    "adjuster", "assessment", "fraud", "payout", "reimbursement",
+    "incident", "accident", "health claim", "motor claim", "documents",
+    "approval", "survey", "investigation", "underwriting", "beneficiary"
+  ],
+  "start_node": "claim_reported",
+  "end_node": "claim_settled",
+  "error_terminal": "claim_rejected",
+  "metadata": {
+    "avg_steps": 12,
+    "sla_seconds": 259200,
+    "compliance": ["IRDAI", "KYC"],
+    "criticality": "high"
+  },
+  "steps": [
+    {
+      "id": "claim_reported",
+      "label": "Claim Reported",
+      "type": "start",
+      "description": "Customer or beneficiary reports an insurance claim.",
+      "required": true
+    },
+    {
+      "id": "register_claim",
+      "label": "Register Claim",
+      "type": "process",
+      "description": "Create a claim record with incident details and policy reference.",
+      "required": true
+    },
+    {
+      "id": "policy_validation",
+      "label": "Validate Policy Coverage",
+      "type": "decision",
+      "description": "Check whether the policy is active and covers the claimed event.",
+      "branches": {
+        "policy_valid": "Policy is active and the claim is covered.",
+        "policy_invalid": "Policy is inactive, expired, or excludes the event."
+      },
+      "required": true
+    },
+    {
+      "id": "document_review",
+      "label": "Review Claim Documents",
+      "type": "decision",
+      "description": "Verify claim form, invoices, photos, and supporting evidence.",
+      "branches": {
+        "documents_complete": "All claim evidence is complete and valid.",
+        "documents_incomplete": "Evidence is missing or insufficient."
+      },
+      "required": true
+    },
+    {
+      "id": "request_missing_documents",
+      "label": "Request Missing Documents",
+      "type": "process",
+      "description": "Ask claimant to provide missing evidence or corrected forms.",
+      "required": false
+    },
+    {
+      "id": "assign_adjuster",
+      "label": "Assign Claims Adjuster",
+      "type": "process",
+      "description": "Assign an adjuster or specialist to inspect the claim.",
+      "required": true
+    },
+    {
+      "id": "damage_assessment",
+      "label": "Damage / Loss Assessment",
+      "type": "decision",
+      "description": "Assess claimed damage, estimate loss, and confirm claim merit.",
+      "branches": {
+        "assessment_valid": "Loss estimate is validated.",
+        "assessment_disputed": "Assessment requires further clarification."
+      },
+      "required": true
+    },
+    {
+      "id": "fraud_screening",
+      "label": "Fraud Screening",
+      "type": "decision",
+      "description": "Evaluate fraud indicators based on history and claim anomalies.",
+      "branches": {
+        "fraud_clear": "No material fraud indicators found.",
+        "fraud_suspected": "Potential fraud requires special investigation."
+      },
+      "required": true
+    },
+    {
+      "id": "special_investigation",
+      "label": "Special Investigation Review",
+      "type": "decision",
+      "description": "Fraud team reviews suspicious claims and decides disposition.",
+      "branches": {
+        "investigation_cleared": "Fraud concerns cleared after investigation.",
+        "investigation_confirmed": "Fraud or misrepresentation confirmed."
+      },
+      "required": false
+    },
+    {
+      "id": "approval_decision",
+      "label": "Claim Approval Decision",
+      "type": "decision",
+      "description": "Determine whether to approve, partially approve, or reject the claim.",
+      "branches": {
+        "approved": "Claim is approved in full.",
+        "partial_approval": "Claim is approved with deductions or limits.",
+        "rejected": "Claim is rejected based on policy or investigation."
+      },
+      "required": true
+    },
+    {
+      "id": "calculate_payout",
+      "label": "Calculate Payout",
+      "type": "process",
+      "description": "Calculate payable amount after deductible, coverage, and limits.",
+      "required": true
+    },
+    {
+      "id": "customer_confirmation",
+      "label": "Customer Confirmation",
+      "type": "decision",
+      "description": "Confirm claimant acceptance of the proposed settlement.",
+      "branches": {
+        "accepted": "Claimant accepts the settlement offer.",
+        "appealed": "Claimant disputes the settlement and appeals."
+      },
+      "required": true
+    },
+    {
+      "id": "settle_claim",
+      "label": "Settle Claim",
+      "type": "process",
+      "description": "Release reimbursement or arrange repair/payment settlement.",
+      "required": true
+    },
+    {
+      "id": "notify_claimant",
+      "label": "Notify Claimant",
+      "type": "process",
+      "description": "Send claim status and settlement outcome to the claimant.",
+      "required": false
+    },
+    {
+      "id": "claim_settled",
+      "label": "Claim Settled",
+      "type": "end",
+      "description": "Claim processing is complete and settlement has been issued.",
+      "required": true
+    },
+    {
+      "id": "claim_rejected",
+      "label": "Claim Rejected",
+      "type": "end",
+      "description": "Claim is rejected or terminated after review.",
+      "required": false
+    },
+    {
+      "id": "retry_document_review",
+      "label": "Retry Document Review",
+      "type": "process",
+      "description": "Re-run document validation after claimant submits missing evidence.",
+      "required": false,
+      "retry_config": {
+        "max_attempts": 2,
+        "backoff_seconds": [86400, 172800],
+        "retry_on": ["documents_incomplete", "appeal_received"]
+      }
+    }
+  ],
+  "transitions": [
+    {"from": "claim_reported", "to": "register_claim", "condition": null},
+    {"from": "register_claim", "to": "policy_validation", "condition": null},
+    {"from": "policy_validation", "to": "document_review", "condition": "policy_valid"},
+    {"from": "policy_validation", "to": "claim_rejected", "condition": "policy_invalid"},
+    {"from": "document_review", "to": "assign_adjuster", "condition": "documents_complete"},
+    {"from": "document_review", "to": "request_missing_documents", "condition": "documents_incomplete"},
+    {"from": "request_missing_documents", "to": "retry_document_review", "condition": null},
+    {"from": "retry_document_review", "to": "document_review", "condition": "retry_allowed"},
+    {"from": "retry_document_review", "to": "claim_rejected", "condition": "max_retries_exceeded"},
+    {"from": "assign_adjuster", "to": "damage_assessment", "condition": null},
+    {"from": "damage_assessment", "to": "fraud_screening", "condition": "assessment_valid"},
+    {"from": "damage_assessment", "to": "request_missing_documents", "condition": "assessment_disputed"},
+    {"from": "fraud_screening", "to": "approval_decision", "condition": "fraud_clear"},
+    {"from": "fraud_screening", "to": "special_investigation", "condition": "fraud_suspected"},
+    {"from": "special_investigation", "to": "approval_decision", "condition": "investigation_cleared"},
+    {"from": "special_investigation", "to": "claim_rejected", "condition": "investigation_confirmed"},
+    {"from": "approval_decision", "to": "calculate_payout", "condition": "approved"},
+    {"from": "approval_decision", "to": "calculate_payout", "condition": "partial_approval"},
+    {"from": "approval_decision", "to": "claim_rejected", "condition": "rejected"},
+    {"from": "calculate_payout", "to": "customer_confirmation", "condition": null},
+    {"from": "customer_confirmation", "to": "settle_claim", "condition": "accepted"},
+    {"from": "customer_confirmation", "to": "retry_document_review", "condition": "appealed"},
+    {"from": "settle_claim", "to": "notify_claimant", "condition": null},
+    {"from": "notify_claimant", "to": "claim_settled", "condition": null}
+  ],
+  "validation_rules": {
+    "max_depth": 18,
+    "max_retries": 2,
+    "required_steps": ["claim_reported", "register_claim", "policy_validation", "document_review", "damage_assessment", "fraud_screening", "approval_decision", "calculate_payout", "claim_settled"],
+    "forbidden_direct_transitions": [
+      {"from": "claim_reported", "to": "settle_claim"},
+      {"from": "register_claim", "to": "claim_settled"}
+    ]
+  },
+  "end_nodes": ["claim_settled", "claim_rejected"],
+  "decision_rules": {
+    "policy_validation": {
+      "branches": [
+        {"label": "policy_valid", "target": "document_review"},
+        {"label": "policy_invalid", "target": "claim_rejected"}
+      ]
+    },
+    "document_review": {
+      "branches": [
+        {"label": "documents_complete", "target": "assign_adjuster"},
+        {"label": "documents_incomplete", "target": "request_missing_documents"}
+      ]
+    },
+    "damage_assessment": {
+      "branches": [
+        {"label": "assessment_valid", "target": "fraud_screening"},
+        {"label": "assessment_disputed", "target": "request_missing_documents"}
+      ]
+    },
+    "fraud_screening": {
+      "branches": [
+        {"label": "fraud_clear", "target": "approval_decision"},
+        {"label": "fraud_suspected", "target": "special_investigation"}
+      ]
+    },
+    "special_investigation": {
+      "branches": [
+        {"label": "investigation_cleared", "target": "approval_decision"},
+        {"label": "investigation_confirmed", "target": "claim_rejected"}
+      ]
+    },
+    "approval_decision": {
+      "branches": [
+        {"label": "approved", "target": "calculate_payout"},
+        {"label": "partial_approval", "target": "calculate_payout"},
+        {"label": "rejected", "target": "claim_rejected"}
+      ]
+    },
+    "customer_confirmation": {
+      "branches": [
+        {"label": "accepted", "target": "settle_claim"},
+        {"label": "appealed", "target": "retry_document_review"}
+      ]
+    }
+  },
+  "flowchart_retry_constraints": [
+    {
+      "node": "retry_document_review",
+      "max_attempts": 2,
+      "loop_back_to": "document_review"
+    }
+  ]
+}

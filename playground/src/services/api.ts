@@ -12,6 +12,8 @@ import type {
   GenerateRequest,
   GenerateResponse,
   HealthResponse,
+  ProcessQueryRequest,
+  ProcessQueryResponse,
 } from "@/types";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -95,4 +97,15 @@ export function fetchDomains(): Promise<DomainListResponse> {
 
 export function fetchHealth(): Promise<HealthResponse> {
   return request<HealthResponse>("/api/v1/health");
+}
+
+export function processQuery(
+  query: string,
+  topK: number = 5,
+): Promise<ProcessQueryResponse> {
+  const payload: ProcessQueryRequest = { query, top_k: topK };
+  return request<ProcessQueryResponse>("/api/v1/rag/process_query", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }

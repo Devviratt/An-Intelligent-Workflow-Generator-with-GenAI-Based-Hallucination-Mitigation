@@ -1,14 +1,14 @@
 # Intelligent Workflow Generator with GenAI-Based Hallucination Mitigation
 
 A production-level, dataset-driven workflow generation engine that synthesizes
-structured workflows from domain knowledge — with **zero external AI API dependencies**.
+structured workflows from domain knowledge - with **zero external AI API dependencies**.
 
 ## Architecture
 
 ```
-User Input → Instruction Parser → Domain Dataset Engine → Workflow Generator
-                                                              ↓
-                        Rendered Output ← Layout Engine ← Validation Engine ← Hallucination Mitigation
+User Input -> Instruction Parser -> Domain Dataset Engine -> Workflow Generator
+                                                              |
+                        Rendered Output <- Layout Engine <- Validation Engine <- Hallucination Mitigation
 ```
 
 ### Core Modules
@@ -90,33 +90,103 @@ curl -X POST http://localhost:8000/api/v1/validate \
 
 ## Design Principles
 
-- **No external AI APIs** — all intelligence is dataset-driven
-- **Deterministic output** — same input always produces same workflow
-- **Grounded generation** — every node/edge validated against domain dataset
-- **Single-pass layout** — BFS depth + branch index, no recursion
-- **Async-first** — no synchronous blocking in the pipeline
-- **Strict separation** — generation, validation, layout, rendering are independent
+- **No external AI APIs** - all intelligence is dataset-driven
+- **Deterministic output** - same input always produces same workflow
+- **Grounded generation** - every node/edge validated against domain dataset
+- **Single-pass layout** - BFS depth + branch index, no recursion
+- **Async-first** - no synchronous blocking in the pipeline
+- **Strict separation** - generation, validation, layout, rendering are independent
 
 ## API Architecture
 
 ```
 src/api/
-├── server.py           # App factory, lifespan, CORS, middleware
-├── exceptions.py       # Global structured exception handlers
-├── middleware.py        # Request logging middleware
-├── landing.py          # Root endpoint — glassmorphism HTML + JSON
-└── routers/
-    ├── workflows.py    # POST /generate, /validate, /evaluate
-    ├── domains.py      # GET /domains, /domains/{domain}
-    └── health.py       # GET /health
+|-- server.py           # App factory, lifespan, CORS, middleware
+|-- exceptions.py       # Global structured exception handlers
+|-- middleware.py       # Request logging middleware
+|-- landing.py          # Root endpoint - glassmorphism HTML + JSON
+`-- routers/
+    |-- workflows.py    # POST /generate, /validate, /evaluate
+    |-- domains.py      # GET /domains, /domains/{domain}
+    `-- health.py       # GET /health
 ```
 
 ### Production Features
 
-- **Versioned routes** — all endpoints under `/api/v1/`
-- **Structured error responses** — consistent JSON for all error types
-- **Method-not-allowed handling** — clear guidance on correct HTTP method
-- **Request logging** — method, path, duration_ms, status_code per request
-- **CORS** — locked to `localhost:3000` and `localhost:5173`
-- **Swagger metadata** — title, description, contact, license, terms of service
-- **Glassmorphism landing page** — professional developer experience at `/`
+- **Versioned routes** - all endpoints under `/api/v1/`
+- **Structured error responses** - consistent JSON for all error types
+- **Method-not-allowed handling** - clear guidance on correct HTTP method
+- **Request logging** - method, path, duration_ms, status_code per request
+- **CORS** - locked to `localhost:3000` and `localhost:5173`
+- **Swagger metadata** - title, description, contact, license, terms of service
+- **Glassmorphism landing page** - professional developer experience at `/`
+
+## Run Instructions
+
+### Backend
+
+From the project root:
+
+```powershell
+cd "c:\Users\Arunvenkat\Desktop\Workflow_Generator\An-Intelligent-Workflow-Generator-with-GenAI-Based-Hallucination-Mitigation"
+& "c:\Users\Arunvenkat\Desktop\Workflow_Generator\.venv\Scripts\Activate.ps1"
+python run_server.py
+```
+
+Backend URLs:
+
+- API root: `http://localhost:8000`
+- Swagger docs: `http://localhost:8000/docs`
+- Health check: `http://localhost:8000/api/v1/health`
+
+### Frontend
+
+Open a second terminal:
+
+```powershell
+cd "c:\Users\Arunvenkat\Desktop\Workflow_Generator\An-Intelligent-Workflow-Generator-with-GenAI-Based-Hallucination-Mitigation\playground"
+npm install
+npm run dev
+```
+
+Frontend URL:
+
+- UI: `http://localhost:5173`
+
+### Full Project
+
+Use two terminals.
+
+Terminal 1:
+
+```powershell
+cd "c:\Users\Arunvenkat\Desktop\Workflow_Generator\An-Intelligent-Workflow-Generator-with-GenAI-Based-Hallucination-Mitigation"
+& "c:\Users\Arunvenkat\Desktop\Workflow_Generator\.venv\Scripts\Activate.ps1"
+python run_server.py
+```
+
+Terminal 2:
+
+```powershell
+cd "c:\Users\Arunvenkat\Desktop\Workflow_Generator\An-Intelligent-Workflow-Generator-with-GenAI-Based-Hallucination-Mitigation\playground"
+npm run dev
+```
+
+Then open `http://localhost:5173`.
+
+### Ollama Notes
+
+Ollama is optional.
+
+The backend now:
+
+- defaults to a lightweight model
+- retries with a lightweight fallback model on low-memory errors
+- falls back to deterministic dataset-based generation if Ollama still fails
+
+If you want to use Ollama directly:
+
+```powershell
+ollama serve
+ollama pull tinyllama
+```

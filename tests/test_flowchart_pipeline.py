@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from src.engines.llm_flowchart_generator import LLMFlowchartGenerationError
 from src.models.request import GenerateRequest, GenerationMode
 from src.models.workflow import EdgeStyle, NodeType
 from src.pipeline import Pipeline
@@ -138,6 +139,8 @@ class TestFlowchartPipeline:
             ("incident_response", "incident alert triage"),
             ("data_pipeline", "data ETL pipeline"),
             ("ci_cd_deployment", "CI/CD deploy release"),
+            ("loan_approval", "loan application underwriting approval"),
+            ("insurance_claim_processing", "insurance claim settlement review"),
         ]
         for domain, instruction in domains:
             request = GenerateRequest(
@@ -188,3 +191,50 @@ class TestFlowchartPipeline:
         assert response.success
         assert response.workflow is not None
         assert response.workflow.is_flowchart is False
+
+    @pytest.mark.asyncio
+    async def test_llm_failure_falls_back_to_deterministic_flowchart(
+        self, pipeline: Pipeline, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        async def fail_llm(*args: object, **kwargs: object) -> None:
+            raise LLMFlowchartGenerationError("simulated ollama memory failure")
+
+        monkeypatch.setattr(pipeline._llm_flowchart_generator, "generate", fail_llm)
+
+        request = GenerateRequest(
+            instruction="payment flowchart",
+            domain_hint="online_payment",
+            mode=GenerationMode.FLOWCHART,
+            prefer_llm_generation=True,
+        )
+        response = await pipeline.generate(request)
+
+        assert response.success
+        assert response.workflow is not None
+        assert response.workflow.is_flowchart is True
+        assert response.workflow.metadata["generation_engine"] == "deterministic_fallback"
+        assert "simulated ollama memory failure" in response.workflow.metadata["fallback_reason"]
+        assert response.validation is not None
+        assert "skipped_llm" not in response.validation.checks_performed
+
+    @pytest.mark.asyncio
+    async def test_flowchart_mode_can_be_embedded_in_instruction(
+        self, pipeline: Pipeline
+    ) -> None:
+        request = GenerateRequest(
+            instruction=(
+                "domain: online_payment\n"
+                "mode: flowchart\n"
+                "- payment request received\n"
+                "- validate request\n"
+                "- payment authorized\n"
+                "- notify customer\n"
+            )
+        )
+        response = await pipeline.generate(request)
+
+        assert response.success
+        assert response.workflow is not None
+        assert response.workflow.is_flowchart is True
+        assert response.workflow.domain == "online_payment"
+        assert response.workflow.metadata["input_format"] == "step_list"

@@ -1,52 +1,43 @@
-/* ControlPanel — glassmorphism sidebar */
-
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 28px 24px;
+  gap: 12px;
+  padding: 28px 24px 24px;
   height: 100%;
   overflow-y: auto;
   min-width: 340px;
-  max-width: 380px;
+  max-width: 390px;
   animation: fade-in 0.5s var(--ease) both;
 }
 
-/* ── Header ── */
 .header {
-  margin-bottom: 8px;
-}
-
-.logo {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
-.logoIcon {
-  font-size: 1.6rem;
-  filter: drop-shadow(0 0 10px var(--accent-glow));
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9be7e8;
+  font-weight: 700;
 }
 
 .title {
-  font-size: 1rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
-  background: linear-gradient(135deg, #e2e8f0, #7dd3fc, #c4b5fd);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
 }
 
 .subtitle {
-  font-size: 0.7rem;
-  font-weight: 500;
+  font-size: 0.86rem;
+  line-height: 1.6;
   color: var(--text-muted);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
-/* ── Labels ── */
 .label {
   font-size: 0.72rem;
   font-weight: 600;
@@ -56,15 +47,14 @@
   margin-top: 6px;
 }
 
-/* ── Textarea ── */
 .textarea {
   width: 100%;
-  padding: 14px 16px;
+  padding: 15px 16px;
   font-family: var(--font-sans);
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   line-height: 1.55;
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.035);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   resize: vertical;
@@ -74,7 +64,8 @@
 
 .textarea:focus {
   border-color: var(--accent);
-  background: rgba(124, 58, 237, 0.04);
+  background: rgba(22, 194, 197, 0.06);
+  box-shadow: 0 0 0 4px rgba(22, 194, 197, 0.08);
 }
 
 .textarea:disabled {
@@ -82,57 +73,36 @@
   cursor: not-allowed;
 }
 
+.hintRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .hint {
   font-size: 0.68rem;
   color: var(--text-muted);
 }
 
-/* ── Toggle group ── */
-.toggleGroup {
-  display: flex;
-  gap: 2px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: 3px;
-}
-
-.toggleBtn {
-  flex: 1;
-  padding: 8px 0;
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-muted);
+.exampleBtn {
+  padding: 0;
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
+  color: #a5f3fc;
+  font-size: 0.72rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition);
+  white-space: nowrap;
 }
 
-.toggleBtn:hover:not(:disabled) {
-  color: var(--text-secondary);
-}
-
-.toggleBtn.active {
-  background: var(--accent);
-  color: #fff;
-  box-shadow: 0 2px 10px var(--accent-glow);
-}
-
-.toggleBtn:disabled {
-  cursor: not-allowed;
-}
-
-/* ── Select ── */
 .select {
   width: 100%;
-  padding: 10px 14px;
+  padding: 12px 14px;
   font-family: var(--font-sans);
-  font-size: 0.84rem;
+  font-size: 0.88rem;
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.035);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   outline: none;
@@ -143,6 +113,7 @@
 
 .select:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(22, 194, 197, 0.08);
 }
 
 .select:disabled {
@@ -150,9 +121,11 @@
   cursor: not-allowed;
 }
 
-/* ── Buttons ── */
 .actions {
   margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 0.75rem;
 }
 
 .btn {
@@ -169,6 +142,17 @@
   justify-content: center;
   gap: 8px;
   transition: all var(--transition);
+}
+
+.btnSecondary {
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text-secondary);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
 }
 
 .btnPrimary {
@@ -198,7 +182,6 @@
   background: rgba(239, 68, 68, 0.25);
 }
 
-/* ── Spinner ── */
 .spinner {
   width: 16px;
   height: 16px;
@@ -209,10 +192,37 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-/* ── Error panel ── */
+.infoCard {
+  margin-top: 0.5rem;
+  padding: 14px 15px;
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(180deg, rgba(22, 194, 197, 0.08), rgba(246, 171, 61, 0.04));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.infoTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.6rem;
+}
+
+.infoList {
+  padding-left: 1rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
 .errorPanel {
   display: flex;
   align-items: flex-start;
@@ -230,5 +240,13 @@
 
 .errorIcon {
   flex-shrink: 0;
-  font-size: 1rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  font-size: 0.75rem;
+  font-weight: 700;
 }
