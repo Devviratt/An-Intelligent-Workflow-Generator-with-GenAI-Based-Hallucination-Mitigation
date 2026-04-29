@@ -127,6 +127,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:5173",
+        "https://an-intelligent-workflow-generator-with-1hc5.onrender.com",
+        "http://an-intelligent-workflow-generator-with-1hc5.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],

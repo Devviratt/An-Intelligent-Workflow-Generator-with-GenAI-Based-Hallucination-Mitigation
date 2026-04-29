@@ -16,6 +16,7 @@ import type {
   ProcessQueryResponse,
 } from "@/types";
 
+// Use relative paths for production (same domain), or VITE_API_BASE_URL for custom backends
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 const DEFAULT_TIMEOUT_MS = 60_000;
 
