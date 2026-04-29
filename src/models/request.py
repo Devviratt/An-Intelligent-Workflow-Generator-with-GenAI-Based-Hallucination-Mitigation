@@ -29,7 +29,7 @@ class GenerateRequest(BaseModel):
     custom_steps: list[str] = Field(default_factory=list)
     use_local_model: bool = Field(default=False)
     prefer_llm_generation: bool = Field(
-        default=True,
+        default=False,
         description="When true, attempt Ollama-based generation before deterministic fallback.",
     )
     minimal: bool = Field(default=False)

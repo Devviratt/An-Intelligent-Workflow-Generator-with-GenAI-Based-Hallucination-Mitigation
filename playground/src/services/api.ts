@@ -42,6 +42,18 @@ async function request<T>(
 ): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const externalSignal = init.signal;
+  const abortOnExternalSignal = () => controller.abort();
+
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort();
+    } else {
+      externalSignal.addEventListener("abort", abortOnExternalSignal, {
+        once: true,
+      });
+    }
+  }
 
   try {
     const res = await fetch(`${BASE}${path}`, {
@@ -76,6 +88,7 @@ async function request<T>(
     );
   } finally {
     clearTimeout(timer);
+    externalSignal?.removeEventListener("abort", abortOnExternalSignal);
   }
 }
 

@@ -100,6 +100,7 @@ export interface GenerateRequest {
   domain_hint?: string;
   include_optional_steps?: boolean;
   custom_steps?: string[];
+  prefer_llm_generation?: boolean;
   evaluation_mode?: boolean;
 }
 

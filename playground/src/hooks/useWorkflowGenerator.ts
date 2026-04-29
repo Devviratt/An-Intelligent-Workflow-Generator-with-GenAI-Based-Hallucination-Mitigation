@@ -60,7 +60,12 @@ export function useWorkflowGenerator(): UseWorkflowGeneratorReturn {
   }, []);
 
   const generate = useCallback(
-    (instruction: string, mode: GenerationMode, domainHint?: string) => {
+    (
+      instruction: string,
+      mode: GenerationMode,
+      domainHint?: string,
+      preferLLM: boolean = false,
+    ) => {
       // Prevent double submission
       if (status === "loading") return;
 
@@ -77,6 +82,7 @@ export function useWorkflowGenerator(): UseWorkflowGeneratorReturn {
           instruction,
           mode,
           domain_hint: domainHint || undefined,
+          prefer_llm_generation: preferLLM,
         },
         controller.signal,
       )

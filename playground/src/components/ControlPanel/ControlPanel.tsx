@@ -23,7 +23,7 @@ export const ControlPanel = memo(function ControlPanel({
   const [instruction, setInstruction] = useState("");
   const [mode, setMode] = useState<GenerationMode>("workflow");
   const [domainHint, setDomainHint] = useState("");
-  const [preferLLM, setPreferLLM] = useState(true);
+  const [preferLLM, setPreferLLM] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isLoading = status === "loading";
@@ -48,7 +48,7 @@ export const ControlPanel = memo(function ControlPanel({
     setInstruction("");
     setMode("workflow");
     setDomainHint("");
-    setPreferLLM(true);
+    setPreferLLM(false);
     onReset();
     textareaRef.current?.focus();
   }, [onReset]);
