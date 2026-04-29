@@ -77,7 +77,6 @@ export function useWorkflowGenerator(): UseWorkflowGeneratorReturn {
           instruction,
           mode,
           domain_hint: domainHint || undefined,
-          prefer_llm_generation: preferLLM,
         },
         controller.signal,
       )
