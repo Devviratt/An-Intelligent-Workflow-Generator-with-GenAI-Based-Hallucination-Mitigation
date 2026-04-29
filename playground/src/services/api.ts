@@ -1,5 +1,5 @@
 /* ================================================================
-   API Service Layer — single source of truth for all backend calls.
+   API Service Layer - single source of truth for all backend calls.
 
    - AbortController for cancellation
    - Configurable timeout
@@ -37,8 +37,6 @@ function resolveApiBase(): string {
 const BASE = resolveApiBase();
 const DEFAULT_TIMEOUT_MS = 60_000;
 
-// ── Error class ──
-
 export class ApiRequestError extends Error {
   constructor(
     message: string,
@@ -50,7 +48,24 @@ export class ApiRequestError extends Error {
   }
 }
 
-// ── Internal helpers ──
+async function parseResponseBody(res: Response): Promise<unknown> {
+  const contentType = res.headers.get("content-type") ?? "";
+  const rawText = await res.text();
+
+  if (!rawText.trim()) {
+    return null;
+  }
+
+  if (contentType.includes("application/json")) {
+    try {
+      return JSON.parse(rawText) as unknown;
+    } catch {
+      throw new ApiRequestError("Server returned invalid JSON", res.status, rawText);
+    }
+  }
+
+  return rawText;
+}
 
 async function request<T>(
   path: string,
@@ -83,14 +98,28 @@ async function request<T>(
       },
     });
 
-    const body: unknown = await res.json();
+    const body = await parseResponseBody(res);
 
     if (!res.ok) {
       const msg =
         typeof body === "object" && body !== null && "message" in body
           ? String((body as Record<string, unknown>).message)
-          : `HTTP ${res.status}`;
+          : typeof body === "string" && body.trim()
+            ? body.slice(0, 200)
+            : `HTTP ${res.status}`;
       throw new ApiRequestError(msg, res.status, body);
+    }
+
+    if (body === null) {
+      throw new ApiRequestError("Server returned an empty response", res.status, null);
+    }
+
+    if (typeof body === "string") {
+      throw new ApiRequestError(
+        "Server returned non-JSON content",
+        res.status,
+        body.slice(0, 500),
+      );
     }
 
     return body as T;
@@ -108,8 +137,6 @@ async function request<T>(
     externalSignal?.removeEventListener("abort", abortOnExternalSignal);
   }
 }
-
-// ── Public API ──
 
 export function generateWorkflow(
   payload: GenerateRequest,
