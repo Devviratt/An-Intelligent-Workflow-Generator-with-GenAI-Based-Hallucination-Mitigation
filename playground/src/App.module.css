@@ -105,8 +105,8 @@
 }
 
 .sidebar {
-  width: 390px;
-  min-width: 340px;
+  width: 460px;
+  min-width: 400px;
   flex-shrink: 0;
   border-right: 1px solid rgba(148, 163, 184, 0.1);
   overflow-y: auto;

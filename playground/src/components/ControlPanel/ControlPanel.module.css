@@ -5,8 +5,8 @@
   padding: 28px 24px 24px;
   height: 100%;
   overflow-y: auto;
-  min-width: 340px;
-  max-width: 390px;
+  min-width: 400px;
+  max-width: 460px;
   animation: fade-in 0.5s var(--ease) both;
 }
 
@@ -119,6 +119,11 @@
 .select:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.select option {
+  background: #ffffff;
+  color: #0f172a;
 }
 
 .actions {

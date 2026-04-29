@@ -17,7 +17,7 @@ import type {
 } from "@/types";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
-const DEFAULT_TIMEOUT_MS = 30_000;
+const DEFAULT_TIMEOUT_MS = 60_000;
 
 // ── Error class ──
 

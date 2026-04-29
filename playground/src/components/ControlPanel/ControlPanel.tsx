@@ -7,7 +7,7 @@ interface ControlPanelProps {
   domains: DomainInfo[];
   status: GenerationStatus;
   error: string | null;
-  onGenerate: (instruction: string, mode: GenerationMode, domainHint?: string) => void;
+  onGenerate: (instruction: string, mode: GenerationMode, domainHint?: string, preferLLM?: boolean) => void;
   onCancel: () => void;
   onReset: () => void;
 }
@@ -23,6 +23,7 @@ export const ControlPanel = memo(function ControlPanel({
   const [instruction, setInstruction] = useState("");
   const [mode, setMode] = useState<GenerationMode>("workflow");
   const [domainHint, setDomainHint] = useState("");
+  const [preferLLM, setPreferLLM] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isLoading = status === "loading";
@@ -30,8 +31,8 @@ export const ControlPanel = memo(function ControlPanel({
   const handleSubmit = useCallback(() => {
     const trimmed = instruction.trim();
     if (!trimmed || isLoading) return;
-    onGenerate(trimmed, mode, domainHint || undefined);
-  }, [domainHint, instruction, isLoading, mode, onGenerate]);
+    onGenerate(trimmed, mode, domainHint || undefined, preferLLM);
+  }, [domainHint, instruction, isLoading, mode, onGenerate, preferLLM]);
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
@@ -47,6 +48,7 @@ export const ControlPanel = memo(function ControlPanel({
     setInstruction("");
     setMode("workflow");
     setDomainHint("");
+    setPreferLLM(true);
     onReset();
     textareaRef.current?.focus();
   }, [onReset]);
@@ -70,7 +72,7 @@ export const ControlPanel = memo(function ControlPanel({
         value={instruction}
         onChange={(event) => setInstruction(event.target.value)}
         onKeyDown={handleKeyDown}
-        rows={7}
+        rows={12}
         disabled={isLoading}
         spellCheck={false}
       />
@@ -116,6 +118,17 @@ export const ControlPanel = memo(function ControlPanel({
           </option>
         ))}
       </select>
+
+      <label className={styles.label} style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: "normal", textTransform: "none" }}>
+        <input
+          type="checkbox"
+          checked={preferLLM}
+          onChange={(e) => setPreferLLM(e.target.checked)}
+          disabled={isLoading}
+          style={{ cursor: "pointer", width: "16px", height: "16px" }}
+        />
+        <span>Use AI (LLM Generation)</span>
+      </label>
 
       <div className={styles.actions}>
         <button
