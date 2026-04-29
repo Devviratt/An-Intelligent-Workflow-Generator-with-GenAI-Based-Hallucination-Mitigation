@@ -137,6 +137,15 @@ class RAGEngine:
                 if value:
                     lines.append(f"- {flag}: YES")
 
+        lines.append("\n## Example Workflow Structure")
+        lines.append("All workflows MUST have this structure:")
+        lines.append("1. Start node (type: start) with outgoing edge(s)")
+        lines.append("2. Process/Decision nodes with incoming AND outgoing edges")
+        lines.append("3. End node (type: end) with incoming edge(s)")
+        lines.append("4. Every edge connects nodes from 'Allowed Transitions' list above")
+        lines.append("\nExample edge format:")
+        lines.append('  {"source": "start_id", "target": "process_id", "condition": null}')
+
         lines.append("\n## Task")
         lines.append(
             "Generate a valid workflow JSON based on the instruction and allowed transitions."

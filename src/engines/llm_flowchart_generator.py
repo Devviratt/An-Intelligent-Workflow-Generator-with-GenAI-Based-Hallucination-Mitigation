@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any
 import httpx
 
 from src.config import settings
+from src.engines.llm_post_processor import LLMPostProcessor
 from src.engines.rag_engine import RAGEngine
 from src.models.workflow import EdgeStyle, GeneratedWorkflow, WorkflowEdge, WorkflowNode
 
@@ -42,6 +43,7 @@ class LLMFlowchartGenerator:
         self._model = model or settings.ollama_model
         self._timeout = timeout or settings.ollama_timeout
         self._rag = RAGEngine()
+        self._post_processor = LLMPostProcessor()
 
     async def generate(
         self,
@@ -49,10 +51,11 @@ class LLMFlowchartGenerator:
         parsed: ParsedInstruction,
         include_optional: bool = True,
     ) -> GeneratedWorkflow:
-        context = self._build_concise_context(dataset, parsed)
+        # Retrieve grounded context from RAG engine using dataset knowledge
+        rag_context = self._rag.build_context(dataset, parsed)
         prompt = self._build_prompt(
             instruction=parsed.original_text,
-            context=context,
+            context=rag_context,
             domain=dataset.domain,
             has_decision_rules=bool(dataset.decision_rules),
             has_retry_constraints=bool(dataset.flowchart_retry_constraints),
@@ -71,35 +74,9 @@ class LLMFlowchartGenerator:
                 f"Failed to parse LLM response: {exc}"
             ) from exc
 
-        return self._build_flowchart(flowchart_data, dataset, parsed, used_model)
-
-    @staticmethod
-    def _build_concise_context(
-        dataset: DomainDataset,
-        parsed: ParsedInstruction,
-    ) -> str:
-        lines = [
-            f"Domain: {dataset.display_name}",
-            f"Description: {dataset.description}",
-            "",
-            "Available steps:",
-        ]
-
-        for step in dataset.steps:
-            req = "[REQUIRED]" if step.required else "[optional]"
-            lines.append(f"- {step.id}: {step.label} {req} ({step.type})")
-
-        if dataset.decision_rules:
-            lines.append("\nDecision nodes:")
-            for node_id, rule in list(dataset.decision_rules.items())[:5]:
-                lines.append(f"- {node_id}: {len(rule.branches)} branches")
-
-        if dataset.flowchart_retry_constraints:
-            lines.append("\nRetry allowed:")
-            for constraint in dataset.flowchart_retry_constraints[:3]:
-                lines.append(f"- {constraint.node} (max {constraint.max_attempts} attempts)")
-
-        return "\n".join(lines)
+        workflow = self._build_flowchart(flowchart_data, dataset, parsed, used_model)
+        workflow = self._post_processor.process(workflow, dataset)
+        return workflow
 
     @staticmethod
     def _build_prompt(
@@ -128,33 +105,48 @@ class LLMFlowchartGenerator:
 
         special_text = "\n".join(special_instructions) if special_instructions else ""
 
-        return f"""{context}
+        return f"""You are a flowchart generation assistant. Use ONLY the provided context to generate valid flowcharts.
 
-## User Instruction
+DATASET CONTEXT (from domain knowledge):
+{context}
+
+USER INSTRUCTION:
 "{instruction}"
 
-{optional_text}
+CRITICAL REQUIREMENTS:
+1. NODES: Use ONLY steps from the context above
+2. EDGES: Create edges to connect ALL nodes in a continuous path
+   - Start node MUST have at least one outgoing edge
+   - Every process/decision node MUST have incoming AND outgoing edges
+   - End node MUST have at least one incoming edge
+   - NO ISOLATED NODES: Every node must be reachable from start
+3. FOR DECISION NODES: Include branches with conditional labels
+4. TRANSITIONS: All edges must follow domain transitions or decision rules
+5. RETRY LOOPS: Include backward edges for retry constraints when specified
 
-## Flowchart-Specific Requirements
+FLOWCHART-SPECIFIC REQUIREMENTS:
 {special_text}
-- Decision nodes must have at least 2 branches
-- Each branch must lead to a valid next step
-- Retry edges should loop back to earlier steps
-- All edges must follow Allowed Transitions or Decision Rules
-- No isolated nodes - every node must be reachable from start
+- Decision nodes must have at least 2 branches, each leading to a valid next step
+- Retry edges should loop back to earlier steps with "retry_loop" style
+- All edges must follow allowed transitions in the dataset
+- {optional_text}
 
-## Output Format
-Return ONLY valid JSON (no markdown, no explanations):
+OUTPUT FORMAT (REQUIRED - VALID JSON ONLY):
 {{
   "nodes": [
-    {{"id": "step_id", "label": "Step Label", "type": "start|process|decision|end", "domain_step_id": "step_id"}}
+    {{"id": "start", "label": "Start", "type": "start", "domain_step_id": "", "description": ""}},
+    {{"id": "decision_1", "label": "Decision", "type": "decision", "domain_step_id": "step_id", "description": "", "branches": {{"true": "process_1", "false": "process_2"}}}},
+    {{"id": "process_1", "label": "Process", "type": "process", "domain_step_id": "step_id", "description": ""}},
+    {{"id": "end", "label": "End", "type": "end", "domain_step_id": "", "description": ""}}
   ],
   "edges": [
-    {{"source": "step1", "target": "step2", "condition": null, "style": "normal"}}
+    {{"source": "start", "target": "decision_1", "condition": null, "style": "normal"}},
+    {{"source": "decision_1", "target": "process_1", "condition": {{"label": "yes", "branch_key": "true"}}, "style": "normal"}},
+    {{"source": "process_1", "target": "end", "condition": null, "style": "normal"}}
   ]
 }}
 
-Generate now:
+Generate valid JSON with complete node-to-node connections:
 """
 
     async def _call_ollama(self, prompt: str) -> tuple[str, str]:
@@ -308,3 +300,4 @@ Generate now:
                 "dataset_version": dataset.version,
             },
         )
+

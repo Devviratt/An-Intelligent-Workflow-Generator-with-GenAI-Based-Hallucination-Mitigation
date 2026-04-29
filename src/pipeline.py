@@ -236,36 +236,30 @@ class Pipeline:
             pre_mitigation_nodes = len(workflow.nodes)
             pre_mitigation_edges = len(workflow.edges)
 
-            if generation_engine in {"deterministic", "deterministic_fallback"}:
-                with profiler.stage(StageName.MITIGATE, input_count=len(workflow.nodes)):
-                    if is_flowchart:
-                        workflow, mitigation_result = self._mitigator.mitigate_flowchart(
-                            workflow, dataset
-                        )
-                    else:
-                        workflow, mitigation_result = self._mitigator.mitigate(
-                            workflow, dataset
-                        )
-                metrics.mitigation_time_ms = profiler.get(StageName.MITIGATE).duration_ms
-                profiler.set_output_count(StageName.MITIGATE, len(workflow.nodes))
+            # Mitigation: run for ALL generation engines (LLM output is post-processed
+            # by LLMPostProcessor, but mitigation provides an additional validation layer)
+            with profiler.stage(StageName.MITIGATE, input_count=len(workflow.nodes)):
+                if is_flowchart:
+                    workflow, mitigation_result = self._mitigator.mitigate_flowchart(
+                        workflow, dataset
+                    )
+                else:
+                    workflow, mitigation_result = self._mitigator.mitigate(
+                        workflow, dataset
+                    )
+            metrics.mitigation_time_ms = profiler.get(StageName.MITIGATE).duration_ms
+            profiler.set_output_count(StageName.MITIGATE, len(workflow.nodes))
 
-                with profiler.stage(StageName.VALIDATE, input_count=len(workflow.nodes)):
-                    if is_flowchart:
-                        validation_result = self._validator.validate_flowchart(
-                            workflow, dataset
-                        )
-                    else:
-                        validation_result = self._validator.validate(workflow, dataset)
-                metrics.validation_time_ms = profiler.get(StageName.VALIDATE).duration_ms
-                profiler.set_output_count(StageName.VALIDATE, len(workflow.nodes))
-            else:
-                mitigation_result = ValidationResult(checks_performed=["skipped_llm"])
-                validation_result = ValidationResult(
-                    checks_performed=["skipped_llm"],
-                    is_valid=True,
-                )
-                metrics.mitigation_time_ms = 0.0
-                metrics.validation_time_ms = 0.0
+            # Validation: ALWAYS run for grounding and safety (dataset as validation layer)
+            with profiler.stage(StageName.VALIDATE, input_count=len(workflow.nodes)):
+                if is_flowchart:
+                    validation_result = self._validator.validate_flowchart(
+                        workflow, dataset
+                    )
+                else:
+                    validation_result = self._validator.validate(workflow, dataset)
+            metrics.validation_time_ms = profiler.get(StageName.VALIDATE).duration_ms
+            profiler.set_output_count(StageName.VALIDATE, len(workflow.nodes))
 
             with profiler.stage(StageName.LAYOUT, input_count=len(workflow.nodes)):
                 if is_flowchart:

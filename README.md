@@ -128,6 +128,7 @@ src/api/
 From the project root:
 
 ```powershell
+Activate virtual env: .\\venv\\Scripts\\Activate.ps1
 cd "c:\Users\Arunvenkat\Desktop\Workflow_Generator\An-Intelligent-Workflow-Generator-with-GenAI-Based-Hallucination-Mitigation"
 & "c:\Users\Arunvenkat\Desktop\Workflow_Generator\.venv\Scripts\Activate.ps1"
 python run_server.py
@@ -145,7 +146,6 @@ Open a second terminal:
 
 ```powershell
 cd "c:\Users\Arunvenkat\Desktop\Workflow_Generator\An-Intelligent-Workflow-Generator-with-GenAI-Based-Hallucination-Mitigation\playground"
-npm install
 npm run dev
 ```
 

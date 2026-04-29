@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any
 import httpx
 
 from src.config import settings
+from src.engines.llm_post_processor import LLMPostProcessor
 from src.engines.rag_engine import RAGEngine
 from src.models.workflow import GeneratedWorkflow, WorkflowEdge, WorkflowNode
 
@@ -42,6 +43,7 @@ class LLMWorkflowGenerator:
         self._model = model or settings.ollama_model
         self._timeout = timeout or settings.ollama_timeout
         self._rag = RAGEngine()
+        self._post_processor = LLMPostProcessor()
 
     async def generate(
         self,
@@ -49,19 +51,42 @@ class LLMWorkflowGenerator:
         parsed: ParsedInstruction,
         include_optional: bool = True,
     ) -> GeneratedWorkflow:
-        """Generate workflow using Ollama with concise dataset context."""
-        rag_context = self._build_concise_context(dataset, parsed)
+        """Generate workflow using Ollama with RAG-grounded dataset context."""
+        # Retrieve grounded context from RAG engine using dataset knowledge
+        rag_context = self._rag.build_context(dataset, parsed)
 
-        prompt = f"""{rag_context}
+        prompt = f"""You are a workflow generation assistant. Use ONLY the provided context to generate valid workflows.
 
-User instruction: "{parsed.original_text}"
+DATASET CONTEXT (from domain knowledge):
+{rag_context}
 
-Generate a valid JSON workflow. Output ONLY the JSON object, no other text.
+USER INSTRUCTION:
+"{parsed.original_text}"
 
-JSON format (REQUIRED):
-{{"nodes": [{{"id": "start", "label": "Start", "type": "start", "domain_step_id": ""}}], "edges": []}}
+CRITICAL REQUIREMENTS:
+1. NODES: Use ONLY steps from the context above
+2. EDGES: Create edges to connect ALL nodes in a continuous path
+   - Start node MUST have at least one outgoing edge
+   - Every process/decision node MUST have incoming AND outgoing edges
+   - End node MUST have at least one incoming edge
+3. NO ISOLATED NODES: Every node must be reachable from start node
+4. FOR DECISION NODES: Include "branches" with conditional labels
+5. TRANSITIONS: All edges must follow allowed transitions in the dataset
 
-JSON:
+OUTPUT FORMAT (REQUIRED - VALID JSON ONLY):
+{{
+  "nodes": [
+    {{"id": "start", "label": "Start", "type": "start", "domain_step_id": "", "description": ""}},
+    {{"id": "process_1", "label": "Process", "type": "process", "domain_step_id": "step_id", "description": ""}},
+    {{"id": "end", "label": "End", "type": "end", "domain_step_id": "", "description": ""}}
+  ],
+  "edges": [
+    {{"source": "start", "target": "process_1", "condition": null}},
+    {{"source": "process_1", "target": "end", "condition": null}}
+  ]
+}}
+
+Generate valid JSON with complete node-to-node connections:
 """
 
         try:
@@ -76,33 +101,9 @@ JSON:
                 f"Failed to parse LLM response: {exc}\n\nRaw response:\n{response}"
             ) from exc
 
-        return self._build_workflow(workflow_data, dataset, parsed, used_model)
-
-    @staticmethod
-    def _build_concise_context(
-        dataset: DomainDataset,
-        parsed: ParsedInstruction,
-    ) -> str:
-        lines = [
-            f"Domain: {dataset.display_name}",
-            f"Description: {dataset.description}",
-            "",
-            "Available steps:",
-        ]
-
-        for step in dataset.steps:
-            req = "[REQUIRED]" if step.required else "[optional]"
-            lines.append(f"- {step.id}: {step.label} {req} ({step.type})")
-
-        required = [s for s in dataset.steps if s.required]
-        if required:
-            lines.append(f"\nMust include steps: {', '.join([s.id for s in required])}")
-
-        lines.append("\nKey transitions:")
-        for transition in dataset.transitions[:10]:
-            lines.append(f"- {transition.from_step} -> {transition.to_step}")
-
-        return "\n".join(lines)
+        workflow = self._build_workflow(workflow_data, dataset, parsed, used_model)
+        workflow = self._post_processor.process(workflow, dataset)
+        return workflow
 
     async def _call_ollama(self, prompt: str) -> tuple[str, str]:
         """Call Ollama and retry with a smaller model on low-memory errors."""
