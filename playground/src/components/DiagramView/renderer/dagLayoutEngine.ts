@@ -17,7 +17,7 @@ import type {
   WorkflowEdge,
   GeneratedWorkflow,
   NodeType,
-} from "@/types";
+} from "@/types/api";
 import { minimizeCrossings } from "./crossingMinimizer";
 
 /* ── Layout configuration ── */

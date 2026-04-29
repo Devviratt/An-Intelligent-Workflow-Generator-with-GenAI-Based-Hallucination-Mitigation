@@ -8,7 +8,7 @@
    - SVG filter definitions
    ================================================================ */
 
-import type { NodeType } from "@/types";
+import type { NodeType } from "@/types/api";
 
 /* ── Node style config ── */
 export interface NodeStyle {

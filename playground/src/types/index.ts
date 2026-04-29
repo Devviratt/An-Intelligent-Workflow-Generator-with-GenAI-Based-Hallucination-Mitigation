@@ -1,8 +1,12 @@
-/* Core types mirroring Python Pydantic models for frontend compile */
+/* Canonical TS types - aligned with Python Pydantic models exactly for Render build */
 
 export type GenerationStatus = "idle" | "loading" | "success" | "error";
 
 export type GenerationMode = "workflow" | "flowchart";
+
+export type NodeType = "start" | "end" | "process" | "decision";
+
+export type EdgeStyle = "normal" | "retry_loop";
 
 export interface DomainInfo {
   domain: string;
@@ -27,25 +31,25 @@ export interface LayoutInfo {
 export interface WorkflowNode {
   id: string;
   label: string;
-  type: "start" | "end" | "process" | "decision";
+  type: NodeType;
   description: string;
   domain_step_id: string;
-  branches?: Record<string, string>;
+  branches: Record<string, string> | null;
   layout: LayoutInfo;
   metadata: Record<string, any>;
 }
 
 export interface EdgeCondition {
   label: string;
-  branch_key?: string;
+  branch_key: string | null;
 }
 
 export interface WorkflowEdge {
   id: string;
   source: string;
   target: string;
-  condition?: EdgeCondition;
-  style: "normal" | "retry_loop";
+  condition: EdgeCondition | null;
+  style: EdgeStyle;
   metadata: Record<string, any>;
 }
 
@@ -60,10 +64,31 @@ export interface GeneratedWorkflow {
   metadata: Record<string, any>;
 }
 
+export type IssueSeverity = "error" | "warning" | "info";
+
+export type IssueCategory = "schema" | "logical" | "dependency" | "cycle" | "depth" | "grounding" | "structure" | "transition" | "duplicate" | "retry" | "flowchart" | "reachability";
+
+export interface ValidationIssue {
+  severity: IssueSeverity;
+  category: IssueCategory;
+  message: string;
+  node_id: string | null;
+  edge_id: string | null;
+  details: Record<string, any>;
+}
+
+export interface ValidationResult {
+  is_valid: boolean;
+  issues: ValidationIssue[];
+  nodes_validated: number;
+  edges_validated: number;
+  checks_performed: string[];
+}
+
 export interface ErrorDetail {
   code: string;
   message: string;
-  field?: string;
+  field: string | null;
 }
 
 export interface PipelineMetrics {
@@ -81,11 +106,11 @@ export interface PipelineMetrics {
 
 export interface GenerateResponse {
   success: boolean;
-  workflow?: GeneratedWorkflow;
-  validation?: any;  // ValidationResult
+  workflow: GeneratedWorkflow | null;
+  validation: ValidationResult | null;
   metrics: PipelineMetrics;
   errors: ErrorDetail[];
-  observability?: any;
+  observability: any | null;
 }
 
 export interface DomainListResponse {
@@ -105,8 +130,21 @@ export interface GenerateRequest {
   evaluation_mode?: boolean;
 }
 
-export interface ValidateRequest {
-  workflow: GeneratedWorkflow;
-  domain?: string;
+export interface HealthResponse {
+  status: string;
+  timestamp: string;
+  dataset_count: number;
+  modes_supported: string[];
+}
+
+export interface ProcessQueryRequest {
+  query: string;
+  top_k: number;
+}
+
+export interface ProcessQueryResponse {
+  user_query: string;
+  embedding_preview: number[];
+  retrieved_chunks: any[];
 }
 
