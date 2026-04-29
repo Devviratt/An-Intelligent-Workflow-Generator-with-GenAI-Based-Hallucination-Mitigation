@@ -14,11 +14,13 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncIterator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.api.exceptions import register_exception_handlers
 from src.api.landing import router as landing_router
@@ -144,3 +146,8 @@ app.include_router(workflows_router, prefix="/api/v1")
 app.include_router(domains_router, prefix="/api/v1")
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(rag_router)
+
+# ── Static files (frontend) ──
+static_dir = Path(__file__).parent.parent / "api" / "static"
+if static_dir.exists():
+    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
