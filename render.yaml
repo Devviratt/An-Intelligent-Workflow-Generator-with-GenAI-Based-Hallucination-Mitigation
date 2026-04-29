@@ -12,7 +12,7 @@ services:
       cd .. &&
       mkdir -p src/api/static &&
       cp -r playground/dist/* src/api/static/
-    startCommand: uvicorn app:app --host 0.0.0.0 --port 8000
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.11"

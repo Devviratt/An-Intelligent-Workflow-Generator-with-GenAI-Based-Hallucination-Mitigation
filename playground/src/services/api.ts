@@ -16,8 +16,25 @@ import type {
   ProcessQueryResponse,
 } from "@/types";
 
-// Use relative paths for production (same domain), or VITE_API_BASE_URL for custom backends
-const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+function resolveApiBase(): string {
+  const rawBase = (import.meta.env.VITE_API_BASE_URL ?? "").trim();
+
+  if (!rawBase) {
+    return "";
+  }
+
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    const isInsecureAbsoluteUrl = /^http:\/\//i.test(rawBase);
+    if (isInsecureAbsoluteUrl) {
+      return "";
+    }
+  }
+
+  return rawBase.replace(/\/+$/, "");
+}
+
+// Default to same-origin in production; only use custom env override when safe.
+const BASE = resolveApiBase();
 const DEFAULT_TIMEOUT_MS = 60_000;
 
 // ── Error class ──
