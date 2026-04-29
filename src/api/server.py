@@ -13,6 +13,7 @@ Architecture:
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
@@ -124,14 +125,20 @@ app = FastAPI(
 
 # ── Middleware (order matters — outermost first) ──
 app.add_middleware(RequestLoggingMiddleware)
+cors_origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+]
+extra_origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+if extra_origins:
+    cors_origins.extend(
+        origin.strip() for origin in extra_origins.split(",") if origin.strip()
+    )
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "https://an-intelligent-workflow-generator-with-1hc5.onrender.com",
-        "http://an-intelligent-workflow-generator-with-1hc5.onrender.com",
-    ],
+    allow_origins=cors_origins,
+    allow_origin_regex=r"https://.*\.onrender\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
