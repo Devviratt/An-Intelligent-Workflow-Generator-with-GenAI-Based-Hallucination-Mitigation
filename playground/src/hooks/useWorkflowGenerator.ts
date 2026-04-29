@@ -60,7 +60,7 @@ export function useWorkflowGenerator(): UseWorkflowGeneratorReturn {
   }, []);
 
   const generate = useCallback(
-    (instruction: string, mode: GenerationMode, domainHint?: string, preferLLM: boolean = true) => {
+    (instruction: string, mode: GenerationMode, domainHint?: string) => {
       // Prevent double submission
       if (status === "loading") return;
 
